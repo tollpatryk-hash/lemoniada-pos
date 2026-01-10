@@ -1,1 +1,157 @@
-!USUWANIE!
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Stoisko z Lemonadą</title>
+<style>
+  body { font-family: monospace; padding: 20px; background: #f0f0f0; }
+  #loginDiv, #mainDiv { margin-bottom: 20px; }
+  #mainDiv { display: none; }
+  button { margin: 5px; padding: 5px 10px; }
+  #receipt { white-space: pre; border: 1px solid #000; padding: 10px; margin-top: 10px; background: #fff; }
+</style>
+</head>
+<body>
+
+<div id="loginDiv">
+  <h2>Logowanie do stoiska</h2>
+  Login: <input type="text" id="login" placeholder="Twoje konto"><br>
+  Hasło: <input type="password" id="password" placeholder="Hasło"><br>
+  <button onclick="login()">Zaloguj</button>
+  <p id="loginMsg"></p>
+</div>
+
+<div id="mainDiv">
+  <h2>Stoisko z Lemonadą</h2>
+  <div>
+    Lemoniada bez soku: <span id="count1">0</span>
+    <button onclick="changeCount(1,1)">+</button>
+    <button onclick="changeCount(1,-1)">-</button>
+  </div>
+  <div>
+    Lemoniada z sokiem: <span id="count2">0</span>
+    <button onclick="changeCount(2,1)">+</button>
+    <button onclick="changeCount(2,-1)">-</button>
+  </div>
+
+  <h3>Do zapłaty: <span id="total">0.00</span> zł</h3>
+  <button onclick="printReceipt()">Wyświetl paragon</button>
+  <button onclick="connectPrinter()">Połącz z drukarką Bluetooth</button>
+  <button onclick="printToPrinter()">Drukuj paragon na drukarce</button>
+
+  <h3>Łączne zarobki dzisiaj: <span id="dailyTotal">0.00</span> zł</h3>
+  <h3>Łączne zarobki wszystkie dni: <span id="allTimeTotal">0.00</span></h3>
+
+  <div id="receipt"></div>
+</div>
+
+<script>
+let price1 = 2.5;
+let price2 = 3.0;
+let count1 = 0;
+let count2 = 0;
+
+// Wczytaj zapisane zarobki z localStorage
+let dailyTotal = parseFloat(localStorage.getItem('dailyTotal')) || 0;
+let allTimeTotal = parseFloat(localStorage.getItem('allTimeTotal')) || 0;
+document.getElementById("dailyTotal").innerText = dailyTotal.toFixed(2);
+document.getElementById("allTimeTotal").innerText = allTimeTotal.toFixed(2);
+
+// Bluetooth printer
+let printerDevice = null;
+let printerServer = null;
+
+async function connectPrinter() {
+  try {
+    printerDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: 'TWOJA_DRUKARKA' }],
+      optionalServices: [0x1811] // zależnie od drukarki
+    });
+    printerServer = await printerDevice.gatt.connect();
+    alert("Połączono z drukarką!");
+  } catch (e) {
+    alert("Nie udało się połączyć: " + e);
+  }
+}
+
+// Proste logowanie
+function login(){
+  let user = document.getElementById("login").value;
+  let pass = document.getElementById("password").value;
+  if(user === "stoisko" && pass === "lemoniada123"){
+    document.getElementById("loginDiv").style.display = "none";
+    document.getElementById("mainDiv").style.display = "block";
+  } else {
+    document.getElementById("loginMsg").innerText = "Błędny login lub hasło!";
+  }
+}
+
+// Zmieniamy liczniki
+function changeCount(type, delta){
+  if(type===1){
+    count1 = Math.max(0, count1 + delta);
+    document.getElementById("count1").innerText = count1;
+  } else {
+    count2 = Math.max(0, count2 + delta);
+    document.getElementById("count2").innerText = count2;
+  }
+  updateTotal();
+}
+
+// Aktualizacja sumy
+function updateTotal(){
+  let total = count1*price1 + count2*price2;
+  document.getElementById("total").innerText = total.toFixed(2);
+}
+
+// Generowanie paragonu w polu receipt
+function printReceipt(){
+  let now = new Date();
+  let dateStr = now.toLocaleString();
+
+  let receiptText = "------ PARAGON ------\n";
+  receiptText += `Data: ${dateStr}\n`;
+  if(count1>0) receiptText += `Lemoniada bez soku x${count1} = ${(count1*price1).toFixed(2)} zł\n`;
+  if(count2>0) receiptText += `Lemoniada z sokiem x${count2} = ${(count2*price2).toFixed(2)} zł\n`;
+  let total = (count1*price1 + count2*price2);
+  receiptText += "--------------------\n";
+  receiptText += `SUMA: ${total.toFixed(2)} zł\n`;
+  receiptText += "--------------------\n";
+  receiptText += "Dziękujemy za zakupy!\n";
+
+  dailyTotal += total;
+  allTimeTotal += total;
+  localStorage.setItem('dailyTotal', dailyTotal.toFixed(2));
+  localStorage.setItem('allTimeTotal', allTimeTotal.toFixed(2));
+  document.getElementById("dailyTotal").innerText = dailyTotal.toFixed(2);
+  document.getElementById("allTimeTotal").innerText = allTimeTotal.toFixed(2);
+
+  count1 = 0; count2 = 0;
+  document.getElementById("count1").innerText = count1;
+  document.getElementById("count2").innerText = count2;
+  updateTotal();
+
+  document.getElementById("receipt").innerText = receiptText;
+}
+
+// Funkcja drukowania do drukarki Bluetooth
+async function printToPrinter() {
+  if (!printerServer) {
+    alert("Najpierw połącz z drukarką!");
+    return;
+  }
+  // Tu trzeba wysłać receiptText w formacie ESC/POS do drukarki
+  // Poniżej przykład jako czysty tekst (drukarka musi obsługiwać UTF-8/ESC/POS)
+  let receiptText = document.getElementById("receipt").innerText;
+  try {
+    // To miejsce na wysłanie danych do drukarki przez Web Bluetooth
+    console.log("Wysyłanie do drukarki:", receiptText);
+    alert("Paragon wysłany do drukarki (symulacja, sprawdź implementację ESC/POS).");
+  } catch(e) {
+    alert("Błąd drukarki: " + e);
+  }
+}
+</script>
+
+</body>
+</html>
