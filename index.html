@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lemoniada POS</title>
+  <style>
+    body { font-family: monospace; text-align: center; margin-top: 30px; }
+    button { font-size: 20px; margin: 5px; padding: 10px 20px; }
+    .product { margin-bottom: 20px; }
+    #receipt { white-space: pre; border: 1px solid #000; padding: 10px; margin-top: 20px; display: inline-block; text-align: left;}
+  </style>
+</head>
+<body>
+  <h1>Stoisko z lemoniadą 🍋</h1>
+
+  <div class="product">
+    <h2>Lemoniada bez soku - 2.50 zł</h2>
+    Ilość: <span id="count1">0</span><br>
+    <button onclick="add1()">+</button>
+    <button onclick="subtract1()">-</button>
+  </div>
+
+  <div class="product">
+    <h2>Lemoniada z sokiem - 3.00 zł</h2>
+    Ilość: <span id="count2">0</span><br>
+    <button onclick="add2()">+</button>
+    <button onclick="subtract2()">-</button>
+  </div>
+
+  <h3>Do zapłaty: <span id="total">0.00</span> zł</h3>
+
+  <button onclick="printReceipt()">Drukuj paragon</button>
+
+  <div id="receipt"></div>
+
+  <script>
+    let count1 = 0;
+    let count2 = 0;
+    const price1 = 2.5;
+    const price2 = 3.0;
+
+    function updateTotal() {
+      const total = (count1*price1 + count2*price2).toFixed(2);
+      document.getElementById('total').innerText = total;
+    }
+
+    function add1() { count1++; document.getElementById('count1').innerText = count1; updateTotal(); }
+    function subtract1() { if(count1>0) count1--; document.getElementById('count1').innerText = count1; updateTotal(); }
+
+    function add2() { count2++; document.getElementById('count2').innerText = count2; updateTotal(); }
+    function subtract2() { if(count2>0) count2--; document.getElementById('count2').innerText = count2; updateTotal(); }
+
+    function printReceipt() {
+      let receipt = "------ PARAGON ------\n";
+      if(count1>0) receipt += `Lemoniada bez soku x${count1} = ${(count1*price1).toFixed(2)} zł\n`;
+      if(count2>0) receipt += `Lemoniada z sokiem x${count2} = ${(count2*price2).toFixed(2)} zł\n`;
+      receipt += "--------------------\n";
+      receipt += `SUMA: ${(count1*price1 + count2*price2).toFixed(2)} zł\n`;
+      receipt += "--------------------\n";
+      receipt += "Dziękujemy za zakupy! 🍋\n";
+      document.getElementById('receipt').innerText = receipt;
+      window.print(); // otwiera okno drukowania
+    }
+  </script>
+</body>
+</html>
