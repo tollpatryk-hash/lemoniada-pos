@@ -8,26 +8,34 @@
   #loginDiv, #mainDiv { margin-bottom: 20px; }
   #mainDiv { display: none; }
   button { margin: 5px; padding: 5px 10px; }
-  #receipt { white-space: pre; border: 1px solid #000; padding: 10px; margin-top: 10px; background: #fff; }
+  #receipt {
+    white-space: pre;
+    border: 1px solid #000;
+    padding: 10px;
+    margin-top: 10px;
+    background: #fff;
+  }
 </style>
 </head>
 <body>
 
 <div id="loginDiv">
   <h2>Logowanie do stoiska</h2>
-  Login: <input type="text" id="login" placeholder="Twoje konto"><br>
-  Hasło: <input type="password" id="password" placeholder="Hasło"><br>
+  Login: <input type="text" id="login"><br>
+  Hasło: <input type="password" id="password"><br>
   <button onclick="login()">Zaloguj</button>
   <p id="loginMsg"></p>
 </div>
 
 <div id="mainDiv">
   <h2>Stoisko z Lemonadą</h2>
+
   <div>
     Lemoniada bez soku: <span id="count1">0</span>
     <button onclick="changeCount(1,1)">+</button>
     <button onclick="changeCount(1,-1)">-</button>
   </div>
+
   <div>
     Lemoniada z sokiem: <span id="count2">0</span>
     <button onclick="changeCount(2,1)">+</button>
@@ -35,122 +43,150 @@
   </div>
 
   <h3>Do zapłaty: <span id="total">0.00</span> zł</h3>
-  <button onclick="printReceipt()">Wyświetl paragon</button>
-  <button onclick="connectPrinter()">Połącz z drukarką Bluetooth</button>
-  <button onclick="printToPrinter()">Drukuj paragon na drukarce</button>
 
-  <h3>Łączne zarobki dzisiaj: <span id="dailyTotal">0.00</span> zł</h3>
-  <h3>Łączne zarobki wszystkie dni: <span id="allTimeTotal">0.00</span></h3>
+  <button onclick="printReceipt()">Wyświetl paragon</button>
+  <button onclick="downloadReceiptAsImage()">Pobierz paragon jako obraz</button>
+  <button onclick="copyReceiptToClipboard()">Skopiuj paragon jako obraz</button>
+  <button onclick="resetEarnings()">Wyzeruj zarobki (admin)</button>
+
+  <h3>Dzisiaj: <span id="dailyTotal">0.00</span> zł</h3>
+  <h3>Wszystkie dni: <span id="allTimeTotal">0.00</span> zł</h3>
 
   <div id="receipt"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 <script>
+/* ===== USTAWIENIA ===== */
+const ADMIN_PASSWORD = "admin123"; // <<< ZMIEŃ HASŁO TUTAJ
+
 let price1 = 2.5;
 let price2 = 3.0;
 let count1 = 0;
 let count2 = 0;
 
-// Wczytaj zapisane zarobki z localStorage
-let dailyTotal = parseFloat(localStorage.getItem('dailyTotal')) || 0;
-let allTimeTotal = parseFloat(localStorage.getItem('allTimeTotal')) || 0;
+let dailyTotal = parseFloat(localStorage.getItem("dailyTotal")) || 0;
+let allTimeTotal = parseFloat(localStorage.getItem("allTimeTotal")) || 0;
+
 document.getElementById("dailyTotal").innerText = dailyTotal.toFixed(2);
 document.getElementById("allTimeTotal").innerText = allTimeTotal.toFixed(2);
 
-// Bluetooth printer
-let printerDevice = null;
-let printerServer = null;
-
-async function connectPrinter() {
-  try {
-    printerDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: 'TWOJA_DRUKARKA' }],
-      optionalServices: [0x1811] // zależnie od drukarki
-    });
-    printerServer = await printerDevice.gatt.connect();
-    alert("Połączono z drukarką!");
-  } catch (e) {
-    alert("Nie udało się połączyć: " + e);
-  }
-}
-
-// Proste logowanie
+/* ===== LOGOWANIE ===== */
 function login(){
-  let user = document.getElementById("login").value;
-  let pass = document.getElementById("password").value;
-  if(user === "stoisko" && pass === "lemoniada123"){
-    document.getElementById("loginDiv").style.display = "none";
-    document.getElementById("mainDiv").style.display = "block";
+  if(
+    document.getElementById("login").value === "stoisko" &&
+    document.getElementById("password").value === "lemoniada123"
+  ){
+    loginDiv.style.display = "none";
+    mainDiv.style.display = "block";
   } else {
-    document.getElementById("loginMsg").innerText = "Błędny login lub hasło!";
+    loginMsg.innerText = "Błędny login lub hasło!";
   }
 }
 
-// Zmieniamy liczniki
+/* ===== LICZNIKI ===== */
 function changeCount(type, delta){
-  if(type===1){
+  if(type === 1){
     count1 = Math.max(0, count1 + delta);
-    document.getElementById("count1").innerText = count1;
+    count1Span.innerText = count1;
   } else {
     count2 = Math.max(0, count2 + delta);
-    document.getElementById("count2").innerText = count2;
+    count2Span.innerText = count2;
   }
   updateTotal();
 }
 
-// Aktualizacja sumy
 function updateTotal(){
-  let total = count1*price1 + count2*price2;
-  document.getElementById("total").innerText = total.toFixed(2);
+  total.innerText = (count1*price1 + count2*price2).toFixed(2);
 }
 
-// Generowanie paragonu w polu receipt
+/* ===== PARAGON ===== */
 function printReceipt(){
-  let now = new Date();
-  let dateStr = now.toLocaleString();
+  let totalPrice = count1*price1 + count2*price2;
+  let text =
+`------ PARAGON ------
+${new Date().toLocaleString()}
+---------------------
+Bez soku x${count1} = ${(count1*price1).toFixed(2)} zł
+Z sokiem x${count2} = ${(count2*price2).toFixed(2)} zł
+---------------------
+SUMA: ${totalPrice.toFixed(2)} zł
+---------------------
+Dziękujemy!
+`;
 
-  let receiptText = "------ PARAGON ------\n";
-  receiptText += `Data: ${dateStr}\n`;
-  if(count1>0) receiptText += `Lemoniada bez soku x${count1} = ${(count1*price1).toFixed(2)} zł\n`;
-  if(count2>0) receiptText += `Lemoniada z sokiem x${count2} = ${(count2*price2).toFixed(2)} zł\n`;
-  let total = (count1*price1 + count2*price2);
-  receiptText += "--------------------\n";
-  receiptText += `SUMA: ${total.toFixed(2)} zł\n`;
-  receiptText += "--------------------\n";
-  receiptText += "Dziękujemy za zakupy!\n";
+  receipt.innerText = text;
 
-  dailyTotal += total;
-  allTimeTotal += total;
-  localStorage.setItem('dailyTotal', dailyTotal.toFixed(2));
-  localStorage.setItem('allTimeTotal', allTimeTotal.toFixed(2));
-  document.getElementById("dailyTotal").innerText = dailyTotal.toFixed(2);
-  document.getElementById("allTimeTotal").innerText = allTimeTotal.toFixed(2);
+  dailyTotal += totalPrice;
+  allTimeTotal += totalPrice;
 
-  count1 = 0; count2 = 0;
-  document.getElementById("count1").innerText = count1;
-  document.getElementById("count2").innerText = count2;
+  localStorage.setItem("dailyTotal", dailyTotal);
+  localStorage.setItem("allTimeTotal", allTimeTotal);
+
+  dailyTotalSpan.innerText = dailyTotal.toFixed(2);
+  allTimeTotalSpan.innerText = allTimeTotal.toFixed(2);
+
+  count1 = count2 = 0;
+  count1Span.innerText = 0;
+  count2Span.innerText = 0;
   updateTotal();
-
-  document.getElementById("receipt").innerText = receiptText;
 }
 
-// Funkcja drukowania do drukarki Bluetooth
-async function printToPrinter() {
-  if (!printerServer) {
-    alert("Najpierw połącz z drukarką!");
+/* ===== RESET ZAROBKÓW (HASŁO ADMINA) ===== */
+function resetEarnings(){
+  let pass = prompt("Podaj hasło admina:");
+
+  if(pass !== ADMIN_PASSWORD){
+    alert("❌ Złe hasło!");
     return;
   }
-  // Tu trzeba wysłać receiptText w formacie ESC/POS do drukarki
-  // Poniżej przykład jako czysty tekst (drukarka musi obsługiwać UTF-8/ESC/POS)
-  let receiptText = document.getElementById("receipt").innerText;
-  try {
-    // To miejsce na wysłanie danych do drukarki przez Web Bluetooth
-    console.log("Wysyłanie do drukarki:", receiptText);
-    alert("Paragon wysłany do drukarki (symulacja, sprawdź implementację ESC/POS).");
-  } catch(e) {
-    alert("Błąd drukarki: " + e);
-  }
+
+  dailyTotal = 0;
+  allTimeTotal = 0;
+
+  localStorage.setItem("dailyTotal", 0);
+  localStorage.setItem("allTimeTotal", 0);
+
+  dailyTotalSpan.innerText = "0.00";
+  allTimeTotalSpan.innerText = "0.00";
+
+  alert("✅ Zarobki wyzerowane");
 }
+
+/* ===== OBRAZ PARAGONU ===== */
+function downloadReceiptAsImage(){
+  if(!receipt.innerText.trim()){
+    alert("Brak paragonu!");
+    return;
+  }
+  html2canvas(receipt).then(c=>{
+    let a = document.createElement("a");
+    a.href = c.toDataURL();
+    a.download = "paragon.png";
+    a.click();
+  });
+}
+
+async function copyReceiptToClipboard(){
+  if(!receipt.innerText.trim()){
+    alert("Brak paragonu!");
+    return;
+  }
+  const canvas = await html2canvas(receipt);
+  canvas.toBlob(b=>{
+    navigator.clipboard.write([new ClipboardItem({"image/png": b})]);
+    alert("📋 Skopiowano do schowka");
+  });
+}
+
+/* ===== SKRÓTY ===== */
+const count1Span = document.getElementById("count1");
+const count2Span = document.getElementById("count2");
+const total = document.getElementById("total");
+const receipt = document.getElementById("receipt");
+const dailyTotalSpan = document.getElementById("dailyTotal");
+const allTimeTotalSpan = document.getElementById("allTimeTotal");
 </script>
 
 </body>
