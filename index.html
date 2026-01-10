@@ -48,8 +48,14 @@ let price1 = 2.5;
 let price2 = 3.0;
 let count1 = 0;
 let count2 = 0;
-let dailyTotal = 0;
-let allTimeTotal = 0;
+
+// Wczytaj zapisane zarobki z localStorage
+let dailyTotal = parseFloat(localStorage.getItem('dailyTotal')) || 0;
+let allTimeTotal = parseFloat(localStorage.getItem('allTimeTotal')) || 0;
+
+// Aktualizacja wyświetlania zarobków przy starcie
+document.getElementById("dailyTotal").innerText = dailyTotal.toFixed(2);
+document.getElementById("allTimeTotal").innerText = allTimeTotal.toFixed(2);
 
 // Proste logowanie
 function login(){
@@ -81,7 +87,7 @@ function updateTotal(){
   document.getElementById("total").innerText = total.toFixed(2);
 }
 
-// Drukowanie paragonu (bez window.open() i print, żeby nie było timeout)
+// Drukowanie paragonu (działa lokalnie, kompatybilne z mini drukarką)
 function printReceipt(){
   let now = new Date();
   let dateStr = now.toLocaleString();
@@ -99,6 +105,11 @@ function printReceipt(){
   // Aktualizacja zarobków
   dailyTotal += total;
   allTimeTotal += total;
+
+  // Zapis do localStorage
+  localStorage.setItem('dailyTotal', dailyTotal.toFixed(2));
+  localStorage.setItem('allTimeTotal', allTimeTotal.toFixed(2));
+
   document.getElementById("dailyTotal").innerText = dailyTotal.toFixed(2);
   document.getElementById("allTimeTotal").innerText = allTimeTotal.toFixed(2);
 
@@ -110,6 +121,14 @@ function printReceipt(){
 
   // Pokaż paragon w polu receipt
   document.getElementById("receipt").innerText = receiptText;
+
+  // Wydruk lokalnie (działa z każdą drukarką, w tym mini termiczną)
+  let printWindow = window.open('', '', 'height=400,width=300');
+  printWindow.document.write('<pre>' + receiptText + '</pre>');
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  printWindow.close();
 }
 </script>
 
