@@ -23,52 +23,75 @@ body {
     margin: 5px;
 }
 
-/* Panel admina */
-#adminPanel {
+/* Nagłówek stoisko */
+#header {
+    display: none;
+    font-size: 24px;
+    font-weight: bold;
     margin-bottom: 20px;
-    display: none; /* tylko dla admina */
-    text-align: center;
 }
 
-#adminPanel input {
-    width: 60px;
+/* Lista produktów */
+.product {
+    display: flex;
+    justify-content: space-between;
+    width: 250px;
+    margin: 5px 0;
+    align-items: center;
+}
+
+.product span {
+    width: 120px;
+}
+
+.product button {
+    width: 30px;
+    margin-left: 5px;
+}
+
+/* Panel przycisków */
+#buttons {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+/* Panel admina */
+.adminBtn {
+    display: none;
 }
 
 /* Zarobek */
 #zarobek {
     font-weight: bold;
-    margin-bottom: 20px;
-    display: none; /* niewidoczny przed logowaniem */
+    margin: 10px 0;
+    display: none;
+}
+
+/* Wartość zakupu */
+#wartoscZakupu {
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
 /* Paragon */
-.paragon {
-    display: none; /* niewidoczny przed logowaniem */
-    padding: 12px 16px;
+#paragon {
+    display: none;
     background: white;
-    border: 1px dashed #000;
+    padding: 10px 15px;
+    border: 1px dashed black;
     text-align: center;
-    width: auto;
-    max-width: fit-content;
-    margin-bottom: 20px;
+    min-width: 250px;
 }
 
-.line { white-space: pre; display: block; }
-
-.title { font-weight: bold; font-size: 20px; margin: 6px 0; padding-left: 4px; }
-
-.date, .item, .thanks { margin: 4px 0; }
-
-.sum { margin: 6px 0; padding-left: 8px; }
-
-.item { display: flex; justify-content: space-between; width: 220px; margin: 0 auto; }
-
-.thanks { padding-left: 2px; }
+.parLine { white-space: pre; display: block; }
+.parTitle { font-weight: bold; font-size: 18px; margin: 6px 0; }
+.parItem { display: flex; justify-content: space-between; margin: 2px 0; }
+.parSum { font-weight: bold; margin: 6px 0; }
+.parThanks { margin-top: 4px; }
 </style>
 </head>
 <body>
-
-<h1>Stoisko z lemoniadą</h1>
 
 <!-- Logowanie -->
 <div id="loginPanel">
@@ -78,118 +101,160 @@ body {
     <div id="loginError" style="color:red; margin-top:5px;"></div>
 </div>
 
-<!-- Panel admina -->
-<div id="adminPanel">
-    <span>(admin)</span><br><br>
-    <label>Dodaj kwotę: <input type="number" id="addAmount" min="0"> zł</label>
-    <button onclick="dodajKwote()">Dodaj</button>
-    <br><br>
-    <label>Odejmij kwotę: <input type="number" id="subtractAmount" min="0"> zł</label>
-    <button onclick="odejmijKwote()">Odejmij</button>
-    <br><br>
-    <button onclick="wyzerujZarobek()">Wyzeruj zarobek</button>
+<!-- Nagłówek stoisko -->
+<div id="header">Stoisko z lemoniadą</div>
+
+<!-- Lista produktów -->
+<div id="products" style="display:none;">
+    <div class="product">
+        <span>Lem. bez soku</span>
+        <button onclick="zmienIlosc('bezSoku',-1)">-</button>
+        <span id="bezSoku">0</span>
+        <button onclick="zmienIlosc('bezSoku',1)">+</button>
+    </div>
+    <div class="product">
+        <span>Lem. z sokiem</span>
+        <button onclick="zmienIlosc('zSokiem',-1)">-</button>
+        <span id="zSokiem">0</span>
+        <button onclick="zmienIlosc('zSokiem',1)">+</button>
+    </div>
 </div>
 
-<!-- Wyświetlenie zarobku -->
+<!-- Przyciski -->
+<div id="buttons" style="display:none;">
+    <button onclick="kopiujParagon()">Kopiuj paragon jako obraz</button>
+    <button onclick="pobierzParagon()">Pobierz paragon jako obraz</button>
+    <button class="adminBtn" onclick="wyzerujZarobek()">Wyzeruj zarobki</button>
+    <button class="adminBtn" onclick="dodajKwote()">Dodaj zarobek</button>
+    <button class="adminBtn" onclick="odejmijKwote()">Odejmij zarobek</button>
+</div>
+
+<!-- Zarobek admin -->
 <div id="zarobek">Zarobek: 0 zł</div>
 
+<!-- Wartość zakupu -->
+<div id="wartoscZakupu" style="display:none;">Wartość zakupu: 0 zł</div>
+
 <!-- Paragon -->
-<div class="paragon" id="paragon">
-  <div class="line">==============================</div>
-  <div class="title">LEMONIADA</div>
-  <div class="line">==============================</div>
-
-  <div class="date" id="date">Data: --</div>
-
-  <div class="line">------------------------------</div>
-
-  <div class="item"><span>Lem. bez soku</span><span>x1 5.00 zł</span></div>
-  <div class="item"><span>Lem. z sokiem</span><span>x2 12.00 zł</span></div>
-
-  <div class="line">------------------------------</div>
-
-  <div class="sum" id="suma">SUMA: 17.00 zł</div>
-
-  <div class="line">==============================</div>
-
-  <div class="thanks">Dziękujemy za zakupy!</div>
-  <div class="line">==============================</div>
+<div id="paragon">
+    <div class="parLine">==============================</div>
+    <div class="parTitle">LEMONIADA</div>
+    <div class="parLine">==============================</div>
+    <div id="parDate" class="parLine">Data: --</div>
+    <div class="parLine">------------------------------</div>
+    <div id="parItems"></div>
+    <div class="parLine">------------------------------</div>
+    <div id="parSum" class="parSum">SUMA: 0.00 zł</div>
+    <div class="parLine">==============================</div>
+    <div class="parThanks">Dziękujemy za zakupy!</div>
+    <div class="parLine">==============================</div>
 </div>
 
 <script>
 // --- Logowanie ---
 const users = {
-    "stoisko": "lemoniada123",
-    "admin": "admin123"
+    "stoisko":"lemoniada123",
+    "admin":"admin123"
 };
 
-function zaloguj() {
+function zaloguj(){
     const login = document.getElementById('login').value;
     const pass = document.getElementById('password').value;
 
-    if(users[login] && users[login] === pass) {
-        document.getElementById('paragon').style.display = 'block'; // pokaż paragon
-        document.getElementById('zarobek').style.display = 'block'; // pokaż zarobek
-        document.getElementById('loginPanel').style.display = 'none'; // ukryj logowanie
-        if(login === "admin") {
-            document.getElementById('adminPanel').style.display = 'block'; // panel admina tylko dla admina
+    if(users[login] && users[login] === pass){
+        document.getElementById('loginPanel').style.display = 'none';
+        document.getElementById('header').style.display = 'block';
+        document.getElementById('products').style.display = 'block';
+        document.getElementById('buttons').style.display = 'flex';
+        document.getElementById('paragon').style.display = 'block';
+        document.getElementById('wartoscZakupu').style.display = 'block';
+        document.getElementById('zarobek').style.display = 'block';
+
+        if(login === 'admin'){
+            document.querySelectorAll('.adminBtn').forEach(btn=>btn.style.display='inline-block');
         }
+        ustawDate();
+        aktualizujParagon();
     } else {
-        document.getElementById('loginError').innerText = "Błędny login lub hasło!";
+        document.getElementById('loginError').innerText="Błędny login lub hasło!";
     }
 }
 
-// --- Zarobek ---
-let zarobek = 0;
+// --- Produkty ---
+let produkty = {
+    "bezSoku": {nazwa:"Lem. bez soku", cena:5, ilosc:0},
+    "zSokiem": {nazwa:"Lem. z sokiem", cena:6, ilosc:0}
+};
 
-function dodajKwote() {
-    const kwota = parseFloat(document.getElementById('addAmount').value);
-    if(!isNaN(kwota)) {
-        zarobek += kwota;
-        aktualizujZarobek();
-    }
+function zmienIlosc(prod, delta){
+    produkty[prod].ilosc += delta;
+    if(produkty[prod].ilosc<0) produkty[prod].ilosc=0;
+    document.getElementById(prod).innerText=produkty[prod].ilosc;
+    aktualizujWartoscZakupu();
+    aktualizujParagon();
 }
 
-function odejmijKwote() {
-    const kwota = parseFloat(document.getElementById('subtractAmount').value);
-    if(!isNaN(kwota)) {
-        zarobek -= kwota;
-        if(zarobek < 0) zarobek = 0;
-        aktualizujZarobek();
-    }
-}
-
-function wyzerujZarobek() {
-    zarobek = 0;
-    aktualizujZarobek();
-}
-
-function aktualizujZarobek() {
-    document.getElementById('zarobek').innerText = `Zarobek: ${zarobek.toFixed(2)} zł`;
+// --- SUMA / wartość zakupu ---
+function aktualizujWartoscZakupu(){
+    let suma = 0;
+    for(let p in produkty) suma += produkty[p].ilosc*produkty[p].cena;
+    document.getElementById('wartoscZakupu').innerText = `Wartość zakupu: ${suma.toFixed(2)} zł`;
+    document.getElementById('parSum').innerText = `SUMA: ${suma.toFixed(2)} zł`;
 }
 
 // --- Paragon ---
-function ustawDate() {
-    const dzis = new Date();
-    const dzien = String(dzis.getDate()).padStart(2,'0');
-    const mies = String(dzis.getMonth()+1).padStart(2,'0');
-    const rok = dzis.getFullYear();
-    const godz = String(dzis.getHours()).padStart(2,'0');
-    const min = String(dzis.getMinutes()).padStart(2,'0');
-    const sek = String(dzis.getSeconds()).padStart(2,'0');
-    document.getElementById('date').innerText = `Data: ${dzien}.${mies}.${rok}, ${godz}:${min}:${sek}`;
+function ustawDate(){
+    const dzis=new Date();
+    const dz=String(dzis.getDate()).padStart(2,'0');
+    const mies=String(dzis.getMonth()+1).padStart(2,'0');
+    const rok=dzis.getFullYear();
+    const godz=String(dzis.getHours()).padStart(2,'0');
+    const min=String(dzis.getMinutes()).padStart(2,'0');
+    const sek=String(dzis.getSeconds()).padStart(2,'0');
+    document.getElementById('parDate').innerText=`Data: ${dz}.${mies}.${rok}, ${godz}:${min}:${sek}`;
 }
 
-ustawDate();
-setInterval(ustawDate, 1000);
+setInterval(ustawDate,1000);
 
-// --- SUMA produktów ---
-function aktualizujSume() {
-    const suma = 5 + 12; // dokładnie tak jak wczoraj
-    document.getElementById('suma').innerText = `SUMA: ${suma.toFixed(2)} zł`;
+function aktualizujParagon(){
+    const par = document.getElementById('parItems');
+    par.innerHTML = '';
+    for(let p in produkty){
+        if(produkty[p].ilosc>0){
+            const div = document.createElement('div');
+            div.className='parItem';
+            div.innerHTML=`<span>${produkty[p].nazwa}</span><span>x${produkty[p].ilosc} ${(produkty[p].ilosc*produkty[p].cena).toFixed(2)} zł</span>`;
+            par.appendChild(div);
+        }
+    }
 }
-aktualizujSume();
+
+// --- Zarobek admin ---
+let zarobek = 0;
+function dodajKwote(){ let kw=10; zarobek+=kw; document.getElementById('zarobek').innerText=`Zarobek: ${zarobek.toFixed(2)} zł`;}
+function odejmijKwote(){ let kw=10; zarobek-=kw;if(zarobek<0) zarobek=0; document.getElementById('zarobek').innerText=`Zarobek: ${zarobek.toFixed(2)} zł`;}
+function wyzerujZarobek(){ zarobek=0; document.getElementById('zarobek').innerText=`Zarobek: ${zarobek.toFixed(2)} zł`; }
+
+// --- Kopiuj i pobierz paragon ---
+function kopiujParagon(){
+    const paragon = document.getElementById('paragon');
+    const range = document.createRange();
+    range.selectNode(paragon);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+    alert("Paragon skopiowany!");
+}
+
+function pobierzParagon(){
+    const paragon = document.getElementById('paragon');
+    const blob = new Blob([paragon.innerText], {type:"text/plain"});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "paragon.txt";
+    link.click();
+}
 </script>
-
 </body>
 </html>
