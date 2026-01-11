@@ -2,203 +2,373 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stoisko z lemoniadą</title>
 <style>
-body{font-family:Arial;text-align:center;margin:20px;}
-button{margin:5px;padding:5px 10px;}
-#paragon{border:1px solid black; display:inline-block; padding:10px; margin-top:10px; text-align:center; min-width:250px;}
-#produktyDiv{margin:10px;}
-
-/* Okienko admina na środku */
-#adminLoginBox{
-    display:none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background:white;
-    border:2px solid black;
-    padding:20px;
-    z-index:1000;
-    min-width:250px;
-    box-shadow:0px 0px 10px rgba(0,0,0,0.5);
+body {
+    font-family: monospace;
+    background: #f0f0f0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-#adminButtons{
-    text-align:right;
-    margin-top:10px;
+
+#loginPanel {
+    text-align: center;
+    margin-bottom: 20px;
+}
+#loginPanel h2 {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+#loginPanel input {
+    margin: 5px;
+}
+
+/* Nagłówek stoisko */
+#header {
+    display: none;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Lista produktów */
+.product {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    margin: 5px 0;
+    align-items: center;
+}
+.product span.ilosc {
+    width: 30px;
+    text-align: center;
+}
+.product button {
+    width: 30px;
+    margin-left: 5px;
+}
+
+/* Przyciski */
+#buttons {
+    display: none;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+/* Zarobek */
+#zarobek, #zarobekCalkowity {
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+/* Wartość zakupu */
+#wartoscZakupu {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* Paragon */
+#paragon {
+    background: white;
+    padding: 10px 15px;
+    border: 1px dashed black;
+    text-align: center;
+    min-width: 250px;
+}
+.parLine { white-space: pre; display: block; }
+.parTitle { font-weight: bold; font-size: 18px; margin: 6px 0; }
+.parItem { display: flex; justify-content: space-between; margin: 2px 0; }
+.parSum { font-weight: bold; margin: 6px 0; }
+.parThanks { margin-top: 4px; }
+
+/* Panel admina dynamiczny */
+#adminPanel {
+    display: none;
+    position: fixed;
+    background: #fff;
+    border: 2px solid black;
+    padding: 15px;
+    z-index: 100;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -30%);
+    min-width: 300px;
+}
+#adminPanel input[type=number] {
+    width: 60px;
+    text-align: center;
+}
+#adminPanel button {
+    margin: 5px;
+}
+#loginAdminPanel {
+    display: none;
+    position: fixed;
+    background: #fff;
+    border: 2px solid black;
+    padding: 15px;
+    z-index: 100;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -30%);
+}
+#loginAdminPanel input {
+    margin: 5px;
 }
 </style>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+<!-- html2canvas do pobierania paragonu jako obraz -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
-<div id="loginDiv">
-<h2>Logowanie</h2>
-Login: <input id="loginUser" placeholder="Login">
-Hasło: <input id="passUser" type="password" placeholder="Hasło">
-<button onclick="logowanie()">Zaloguj</button>
-<p id="loginError" style="color:red"></p>
+<!-- Logowanie użytkownika -->
+<div id="loginPanel">
+    <h2>Logowanie</h2>
+    <input type="text" id="login" placeholder="Login">
+    <input type="password" id="password" placeholder="Hasło">
+    <button onclick="zaloguj()">Zaloguj</button>
+    <div id="loginError" style="color:red; margin-top:5px;"></div>
 </div>
 
-<div id="appDiv" style="display:none;">
-<h1>Stoisko z lemoniadą</h1>
+<!-- Nagłówek stoisko -->
+<div id="header">Stoisko z lemoniadą</div>
 
-<div id="produktyDiv">
-<div>Lem. bez soku: <span id="bezSoku">0</span> <button onclick="zmienIlosc('bezSoku',1)">+</button> <button onclick="zmienIlosc('bezSoku',-1)">-</button></div>
-<div>Lem. z sokiem: <span id="zSokiem">0</span> <button onclick="zmienIlosc('zSokiem',1)">+</button> <button onclick="zmienIlosc('zSokiem',-1)">-</button></div>
+<!-- Produkty -->
+<div id="products" style="display:none;">
+    <div class="product">
+        <span>Lem. bez soku</span>
+        <span id="bezSoku" class="ilosc">0</span>
+        <button onclick="zmienIlosc('bezSoku',1)">+</button>
+        <button onclick="zmienIlosc('bezSoku',-1)">-</button>
+    </div>
+    <div class="product">
+        <span>Lem. z sokiem</span>
+        <span id="zSokiem" class="ilosc">0</span>
+        <button onclick="zmienIlosc('zSokiem',1)">+</button>
+        <button onclick="zmienIlosc('zSokiem',-1)">-</button>
+    </div>
 </div>
 
-<div>
-<button onclick="generujParagon()">Generuj paragon</button>
-<button onclick="pobierzParagon()">Pobierz paragon jako obraz</button>
-<button onclick="adminActionPrompt('dodaj')">Dodaj zarobek (admin)</button>
-<button onclick="adminActionPrompt('odejmij')">Odejmij zarobek (admin)</button>
-<button onclick="adminActionPrompt('wyzeruj')">Wyzeruj zarobek (admin)</button>
+<!-- Przyciski -->
+<div id="buttons">
+    <button onclick="kopiujParagon()">Kopiuj paragon jako obraz</button>
+    <button onclick="pobierzParagon()">Pobierz paragon jako obraz</button>
+    <button onclick="generujParagon()">Generuj paragon</button>
+    <button onclick="wezLoginAdmin('odejmij')">Odejmij zarobek (admin)</button>
+    <button onclick="wezLoginAdmin('dodaj')">Dodaj zarobek (admin)</button>
+    <button onclick="wezLoginAdmin('wyzeruj')">Wyzeruj zarobek (admin)</button>
 </div>
 
-<h3>Wartość zakupu: <span id="wartoscZakupu">0</span> zł</h3>
-<div id="paragon"></div>
-<h3 id="zarobekTekst">Zarobek z dzisiaj: 0 | Zarobek łącznie: 0</h3>
+<!-- Zarobek -->
+<div id="zarobek" style="display:none;">Zarobek z dzisiaj: 0.00 zł</div>
+<div id="zarobekCalkowity" style="display:none;">Zarobek łącznie: 0.00 zł</div>
+
+<div id="wartoscZakupu" style="display:none;">Wartość zakupu: 0 zł</div>
+
+<!-- Paragon -->
+<div id="paragon" style="display:none;">
+    <div class="parLine">==============================</div>
+    <div class="parTitle">LEMONIADA</div>
+    <div class="parLine">==============================</div>
+    <div id="parDate" class="parLine">Data: --</div>
+    <div class="parLine">------------------------------</div>
+    <div id="parItems"></div>
+    <div class="parLine">------------------------------</div>
+    <div id="parSum" class="parSum">SUMA: 0.00 zł</div>
+    <div class="parLine">==============================</div>
+    <div class="parThanks">Dziękujemy za zakupy!</div>
+    <div class="parLine">==============================</div>
 </div>
 
-<!-- Okienko logowania admina -->
-<div id="adminLoginBox">
-<h3>Logowanie admina</h3>
-Login: <input id="adminLogin" placeholder="Login"><br>
-Hasło: <input id="adminPass" type="password" placeholder="Hasło"><br>
-Kwota (tylko dla dodaj/odejmij): <input id="adminKwota" placeholder="Kwota"><br>
-<div id="adminButtons">
-<button onclick="zatwierdzAdminLogin()">Zatwierdź</button>
-<button onclick="anulujAdmin()">Anuluj</button>
-</div>
-<p id="adminError" style="color:red"></p>
+<!-- Logowanie admina -->
+<div id="loginAdminPanel">
+    <div>Wpisz login i hasło admina</div>
+    <input type="text" id="adminLogin" placeholder="Login"><br>
+    <input type="password" id="adminPass" placeholder="Hasło"><br>
+    <button onclick="zalogujAdmin()">Zatwierdź</button>
+    <button onclick="anulujAdminLogin()">Anuluj</button>
+    <div id="loginAdminError" style="color:red; margin-top:5px;"></div>
 </div>
 
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<!-- Panel admina akcji -->
+<div id="adminPanel">
+    <div id="adminActionTitle"></div>
+    Kwota: <input type="number" id="adminKwota" value="0"><br>
+    <button onclick="zmienKwote(1)">+</button>
+    <button onclick="zmienKwote(-1)">-</button><br>
+    <button onclick="zatwierdzAdminAction()">Zatwierdź</button>
+    <button onclick="anulujAdminAction()">Anuluj</button>
+</div>
+
 <script>
-// Firebase config
-const firebaseConfig = {
-  apiKey: "TWOJE_APIKEY",
-  authDomain: "TWOJ_PROJEKT.firebaseapp.com",
-  databaseURL: "https://TWOJ_PROJEKT-default-rtdb.firebaseio.com",
-  projectId: "TWOJ_PROJEKT",
-  storageBucket: "TWOJ_PROJEKT.appspot.com",
-  messagingSenderId: "NUMER",
-  appId: "APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// Produkty
-let produkty = {bezSoku:{ilosc:0,cena:2.5}, zSokiem:{ilosc:0,cena:3}};
-let sumaZakupu = 0;
-
-// Zarobek
-let zarobekDzis = 0;
-let zarobekCalk = 0;
-let currentAdminAction='';
-
-// Odczyt z Firebase
-db.ref('zarobekDzis').on('value',snap=>{if(snap.exists()){zarobekDzis=snap.val();aktualizujZarobek();}});
-db.ref('zarobekCalk').on('value',snap=>{if(snap.exists()){zarobekCalk=snap.val();aktualizujZarobek();}});
-
-// Funkcje
-function aktualizujWartoscZakupu(){
-    sumaZakupu = produkty.bezSoku.ilosc*produkty.bezSoku.cena + produkty.zSokiem.ilosc*produkty.zSokiem.cena;
-    document.getElementById('wartoscZakupu').innerText = sumaZakupu.toFixed(2);
+// --- Logowanie użytkownika ---
+const users = { "stoisko":"lemoniada123", "admin":"admin123" };
+function zaloguj(){
+    const login = document.getElementById('login').value;
+    const pass = document.getElementById('password').value;
+    if(users[login] && users[login]===pass){
+        document.getElementById('loginPanel').style.display='none';
+        document.getElementById('header').style.display='block';
+        document.getElementById('products').style.display='block';
+        document.getElementById('buttons').style.display='flex';
+        document.getElementById('paragon').style.display='block';
+        document.getElementById('wartoscZakupu').style.display='block';
+        document.getElementById('zarobek').style.display='block';
+        document.getElementById('zarobekCalkowity').style.display='block';
+        ustawDate();
+        aktualizujParagon();
+        aktualizujWartoscZakupu();
+        aktualizujZarobek();
+    } else {
+        document.getElementById('loginError').innerText="Błędny login lub hasło!";
+    }
 }
 
-function zmienIlosc(prod,delta){
+// --- Produkty ---
+let produkty = {
+    "bezSoku": {nazwa:"Lem. bez soku", cena:2.5, ilosc:0},
+    "zSokiem": {nazwa:"Lem. z sokiem", cena:3, ilosc:0}
+};
+function zmienIlosc(prod, delta){
     produkty[prod].ilosc += delta;
     if(produkty[prod].ilosc<0) produkty[prod].ilosc=0;
     document.getElementById(prod).innerText = produkty[prod].ilosc;
     aktualizujWartoscZakupu();
+    aktualizujParagon();
 }
 
+// --- Wartość zakupu / paragon ---
+let sumaZakupu = 0;
+let zarobekDzis = 0;
+let zarobekCalk = 0;
+
+function aktualizujWartoscZakupu(){
+    let suma=0;
+    for(let p in produkty) suma += produkty[p].ilosc*produkty[p].cena;
+    sumaZakupu = suma;
+    document.getElementById('wartoscZakupu').innerText=`Wartość zakupu: ${suma.toFixed(2)} zł`;
+    document.getElementById('parSum').innerText=`SUMA: ${suma.toFixed(2)} zł`;
+}
+function ustawDate(){
+    const dzis=new Date();
+    const dz=String(dzis.getDate()).padStart(2,'0');
+    const mies=String(dzis.getMonth()+1).padStart(2,'0');
+    const rok=dzis.getFullYear();
+    const godz=String(dzis.getHours()).padStart(2,'0');
+    const min=String(dzis.getMinutes()).padStart(2,'0');
+    const sek=String(dzis.getSeconds()).padStart(2,'0');
+    document.getElementById('parDate').innerText=`Data: ${dz}.${mies}.${rok}, ${godz}:${min}:${sek}`;
+}
+setInterval(ustawDate,1000);
 function aktualizujParagon(){
-    let text='';
-    if(produkty.bezSoku.ilosc>0) text+=`Lem. bez soku x ${produkty.bezSoku.ilosc} = ${(produkty.bezSoku.ilosc*produkty.bezSoku.cena).toFixed(2)} zł\n`;
-    if(produkty.zSokiem.ilosc>0) text+=`Lem. z sokiem x ${produkty.zSokiem.ilosc} = ${(produkty.zSokiem.ilosc*produkty.zSokiem.cena).toFixed(2)} zł\n`;
-    text+=`Razem: ${sumaZakupu.toFixed(2)} zł\nDziękujemy za zakupy!`;
-    document.getElementById('paragon').innerText=text;
+    const par=document.getElementById('parItems');
+    par.innerHTML='';
+    for(let p in produkty){
+        if(produkty[p].ilosc>0){
+            const div = document.createElement('div');
+            div.className='parItem';
+            div.innerHTML=`<span>${produkty[p].nazwa}</span><span>x${produkty[p].ilosc} ${(produkty[p].ilosc*produkty[p].cena).toFixed(2)} zł</span>`;
+            par.appendChild(div);
+        }
+    }
 }
 
-function aktualizujZarobek(){
-    document.getElementById('zarobekTekst').innerText=`Zarobek z dzisiaj: ${zarobekDzis.toFixed(2)} | Zarobek łącznie: ${zarobekCalk.toFixed(2)}`;
-}
-
+// --- Generuj paragon ---
 function generujParagon(){
     aktualizujParagon();
     zarobekDzis += sumaZakupu;
     zarobekCalk += sumaZakupu;
-    db.ref('zarobekDzis').set(zarobekDzis);
-    db.ref('zarobekCalk').set(zarobekCalk);
     aktualizujZarobek();
-
-    // Zerowanie liczników
-    for(let p in produkty){
-        produkty[p].ilosc=0;
-        document.getElementById(p).innerText=0;
-    }
-    sumaZakupu=0;
-    aktualizujWartoscZakupu();
-    alert('Paragon wygenerowany i liczniki zresetowane!');
+    alert('Paragon wygenerowany i zarobek zapisany!');
 }
 
-function pobierzParagon(){
-    html2canvas(document.getElementById('paragon')).then(canvas=>{
-        let link=document.createElement('a');
-        link.download='paragon.png';
-        link.href=canvas.toDataURL();
-        link.click();
-    });
+// --- Aktualizacja zarobku ---
+function aktualizujZarobek(){
+    document.getElementById('zarobek').innerText = `Zarobek z dzisiaj: ${zarobekDzis.toFixed(2)} zł`;
+    document.getElementById('zarobekCalkowity').innerText = `Zarobek łącznie: ${zarobekCalk.toFixed(2)} zł`;
 }
 
-function logowanie(){
-    const l=document.getElementById('loginUser').value;
-    const p=document.getElementById('passUser').value;
-    if(l==='stoisko' && p==='lemoniada123'){
-        document.getElementById('loginDiv').style.display='none';
-        document.getElementById('appDiv').style.display='block';
-    }
-    else{document.getElementById('loginError').innerText='Błędny login lub hasło!';}
-}
+// --- Zarobek admin ---
+let currentAdminAction='';
 
-// Admin
-function adminActionPrompt(action){
+// --- Obsługa przycisków admina ---
+function wezLoginAdmin(action){
     currentAdminAction=action;
-    document.getElementById('adminLoginBox').style.display='block';
-    document.getElementById('adminError').innerText='';
-}
-
-function zatwierdzAdminLogin(){
-    const l=document.getElementById('adminLogin').value;
-    const p=document.getElementById('adminPass').value;
-    const kw=parseFloat(document.getElementById('adminKwota').value)||0;
-    if(l==='admin' && p==='admin123'){
-        if(currentAdminAction==='dodaj'){zarobekDzis+=kw; zarobekCalk+=kw;}
-        else if(currentAdminAction==='odejmij'){zarobekDzis-=kw; zarobekCalk-=kw;if(zarobekDzis<0)zarobekDzis=0;if(zarobekCalk<0)zarobekCalk=0;}
-        else if(currentAdminAction==='wyzeruj'){zarobekDzis=0; zarobekCalk=0;}
-        db.ref('zarobekDzis').set(zarobekDzis);
-        db.ref('zarobekCalk').set(zarobekCalk);
-        aktualizujZarobek();
-        document.getElementById('adminLoginBox').style.display='none';
-        document.getElementById('adminLogin').value='';
-        document.getElementById('adminPass').value='';
-        document.getElementById('adminKwota').value='';
-    } else {document.getElementById('adminError').innerText='Błędny login lub hasło!';}
-}
-
-function anulujAdmin(){
-    document.getElementById('adminLoginBox').style.display='none';
+    document.getElementById('loginAdminPanel').style.display='block';
+    document.getElementById('loginAdminError').innerText='';
     document.getElementById('adminLogin').value='';
     document.getElementById('adminPass').value='';
-    document.getElementById('adminKwota').value='';
+}
+function anulujAdminLogin(){
+    document.getElementById('loginAdminPanel').style.display='none';
+}
+function zalogujAdmin(){
+    const login=document.getElementById('adminLogin').value;
+    const pass=document.getElementById('adminPass').value;
+    if(login==='admin' && pass==='admin123'){
+        document.getElementById('loginAdminPanel').style.display='none';
+        if(currentAdminAction==='wyzeruj'){
+            zarobekDzis=0;
+            zarobekCalk=0;
+            aktualizujZarobek();
+            alert('Zarobek wyzerowany!');
+        } else {
+            pokazAdminPanel();
+        }
+    } else {
+        document.getElementById('loginAdminError').innerText='Błędny login lub hasło!';
+    }
+}
+
+// --- Panel admina akcji ---
+function pokazAdminPanel(){
+    const panel=document.getElementById('adminPanel');
+    panel.style.display='block';
+    const title=document.getElementById('adminActionTitle');
+    const kwotaInput=document.getElementById('adminKwota');
+    kwotaInput.value=0;
+    if(currentAdminAction==='dodaj') title.innerText='Dodaj zarobek';
+    else if(currentAdminAction==='odejmij') title.innerText='Odejmij zarobek';
+}
+function zmienKwote(delta){
+    const kw=document.getElementById('adminKwota');
+    kw.value = Math.max(0, parseFloat(kw.value) + delta);
+}
+function zatwierdzAdminAction(){
+    const kw=parseFloat(document.getElementById('adminKwota').value);
+    if(currentAdminAction==='dodaj') { zarobekDzis += kw; zarobekCalk += kw; }
+    else if(currentAdminAction==='odejmij') { zarobekDzis -= kw; zarobekCalk -= kw; if(zarobekDzis<0) zarobekDzis=0; if(zarobekCalk<0) zarobekCalk=0; }
+    aktualizujZarobek();
+    document.getElementById('adminPanel').style.display='none';
+}
+function anulujAdminAction(){
+    document.getElementById('adminPanel').style.display='none';
+}
+
+// --- Kopiuj / pobierz paragon ---
+function kopiujParagon(){
+    const paragon=document.getElementById('paragon');
+    const range=document.createRange();
+    range.selectNode(paragon);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+    alert('Paragon skopiowany!');
+}
+function pobierzParagon(){
+    const paragon=document.getElementById('paragon');
+    html2canvas(paragon).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'paragon.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    });
 }
 </script>
 </body>
