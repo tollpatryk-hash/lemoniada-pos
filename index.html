@@ -26,6 +26,7 @@ body {
     margin: 5px;
 }
 
+/* Nagłówek stoisko */
 #header {
     display: none;
     font-size: 24px;
@@ -33,6 +34,7 @@ body {
     margin-bottom: 20px;
 }
 
+/* Lista produktów */
 .product {
     display: flex;
     justify-content: space-between;
@@ -49,6 +51,7 @@ body {
     margin-left: 5px;
 }
 
+/* Przyciski */
 #buttons {
     display: none;
     flex-wrap: wrap;
@@ -56,22 +59,26 @@ body {
     margin: 10px 0;
 }
 
+/* Zarobek */
 #zarobek, #zarobekCalkowity {
     font-weight: bold;
     margin: 5px 0;
 }
 
+/* Wartość zakupu */
 #wartoscZakupu {
     font-weight: bold;
     margin-bottom: 10px;
 }
 
+/* Paragon */
 #paragon {
     background: white;
     padding: 10px 15px;
     border: 1px dashed black;
     text-align: center;
     min-width: 250px;
+    font-size: 14px;
 }
 .parLine { white-space: pre; display: block; }
 .parTitle { font-weight: bold; font-size: 18px; margin: 6px 0; }
@@ -79,6 +86,7 @@ body {
 .parSum { font-weight: bold; margin: 6px 0; }
 .parThanks { margin-top: 4px; }
 
+/* Panel admina dynamiczny */
 #adminPanel {
     display: none;
     position: fixed;
@@ -113,6 +121,9 @@ body {
     margin: 5px;
 }
 </style>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
@@ -189,16 +200,21 @@ body {
 </div>
 
 <script>
-const users = { "stoisko":"lemoniada123", "admin":"admin123" };
-let produkty = {
-    "bezSoku": {nazwa:"Lem. bez soku", cena:2.5, ilosc:0},
-    "zSokiem": {nazwa:"Lem. z sokiem", cena:3, ilosc:0}
+// --- Firebase ---
+const firebaseConfig = {
+    apiKey: "TU_WSTAW_SWÓJ_API_KEY",
+    authDomain: "TU_WSTAW_SWÓJ_PROJEKT.firebaseapp.com",
+    databaseURL: "TU_WSTAW_SWÓJ_URL_BAZY",
+    projectId: "TU_WSTAW_SWÓJ_PROJECT_ID",
+    storageBucket: "TU_WSTAW_SWÓJ_BUCKET",
+    messagingSenderId: "TU_WSTAW_SWÓJ_SENDER_ID",
+    appId: "TU_WSTAW_SWÓJ_APP_ID"
 };
-let sumaZakupu = 0;
-let zarobekDzis = parseFloat(localStorage.getItem('zarobekDzis')) || 0;
-let zarobekCalk = parseFloat(localStorage.getItem('zarobekCalk')) || 0;
-let currentAdminAction='';
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
+// --- Logowanie ---
+const users = { "stoisko":"lemoniada123", "admin":"admin123" };
 function zaloguj(){
     const login = document.getElementById('login').value;
     const pass = document.getElementById('password').value;
@@ -212,19 +228,28 @@ function zaloguj(){
         document.getElementById('zarobek').style.display='block';
         document.getElementById('zarobekCalkowity').style.display='block';
         ustawDate();
-        aktualizujWartoscZakupu();
-        aktualizujZarobek();
+        wczytajZarobek();
     } else {
         document.getElementById('loginError').innerText="Błędny login lub hasło!";
     }
 }
 
+// --- Produkty ---
+let produkty = {
+    "bezSoku": {nazwa:"Lem. bez soku", cena:2.5, ilosc:0},
+    "zSokiem": {nazwa:"Lem. z sokiem", cena:3, ilosc:0}
+};
 function zmienIlosc(prod, delta){
     produkty[prod].ilosc += delta;
     if(produkty[prod].ilosc<0) produkty[prod].ilosc=0;
     document.getElementById(prod).innerText = produkty[prod].ilosc;
     aktualizujWartoscZakupu();
 }
+
+// --- Wartość zakupu / paragon ---
+let sumaZakupu = 0;
+let zarobekDzis = 0;
+let zarobekCalk = 0;
 
 function aktualizujWartoscZakupu(){
     let suma=0;
@@ -246,42 +271,60 @@ function ustawDate(){
 }
 setInterval(ustawDate,1000);
 
-function generujParagon(){
+function aktualizujParagon(){
     const par=document.getElementById('parItems');
     par.innerHTML='';
-
     for(let p in produkty){
         if(produkty[p].ilosc>0){
             const div = document.createElement('div');
             div.className='parItem';
-            div.innerHTML=`<span style="display:inline-block; min-width:180px; text-align:left;">${produkty[p].nazwa} x${produkty[p].ilosc}</span><span style="display:inline-block; text-align:right; width:50px;">${(produkty[p].ilosc*produkty[p].cena).toFixed(2)} zł</span>`;
+            div.innerHTML=`<span>${produkty[p].nazwa} x${produkty[p].ilosc}</span><span>${(produkty[p].ilosc*produkty[p].cena).toFixed(2)} zł</span>`;
             par.appendChild(div);
         }
     }
+}
 
-    sumaZakupu = 0;
-    for(let p in produkty) sumaZakupu += produkty[p].ilosc*produkty[p].cena;
+// --- Generuj paragon ---
+function generujParagon(){
+    aktualizujParagon();
     zarobekDzis += sumaZakupu;
     zarobekCalk += sumaZakupu;
-
-    localStorage.setItem('zarobekDzis',zarobekDzis.toFixed(2));
-    localStorage.setItem('zarobekCalk',zarobekCalk.toFixed(2));
     aktualizujZarobek();
-
-    for(let p in produkty) produkty[p].ilosc=0;
-    document.getElementById('bezSoku').innerText=0;
-    document.getElementById('zSokiem').innerText=0;
+    zapiszZarobek();
+    // Zerowanie liczników produktów
+    for(let p in produkty){
+        produkty[p].ilosc = 0;
+        document.getElementById(p).innerText = 0;
+    }
     aktualizujWartoscZakupu();
-
     alert('Paragon wygenerowany i zarobek zapisany!');
 }
 
+// --- Zarobek ---
 function aktualizujZarobek(){
     document.getElementById('zarobek').innerText = `Zarobek z dzisiaj: ${zarobekDzis.toFixed(2)} zł`;
     document.getElementById('zarobekCalkowity').innerText = `Zarobek łącznie: ${zarobekCalk.toFixed(2)} zł`;
 }
 
+// --- Firebase save/load ---
+function zapiszZarobek(){
+    db.ref('zarobek').set({
+        dzis: zarobekDzis,
+        calkowity: zarobekCalk
+    });
+}
+function wczytajZarobek(){
+    db.ref('zarobek').get().then(snapshot=>{
+        if(snapshot.exists()){
+            zarobekDzis = snapshot.val().dzis || 0;
+            zarobekCalk = snapshot.val().calkowity || 0;
+        }
+        aktualizujZarobek();
+    });
+}
+
 // --- Admin ---
+let currentAdminAction='';
 function wezLoginAdmin(action){
     currentAdminAction=action;
     document.getElementById('loginAdminPanel').style.display='block';
@@ -289,7 +332,9 @@ function wezLoginAdmin(action){
     document.getElementById('adminLogin').value='';
     document.getElementById('adminPass').value='';
 }
-function anulujAdminLogin(){ document.getElementById('loginAdminPanel').style.display='none'; }
+function anulujAdminLogin(){
+    document.getElementById('loginAdminPanel').style.display='none';
+}
 function zalogujAdmin(){
     const login=document.getElementById('adminLogin').value;
     const pass=document.getElementById('adminPass').value;
@@ -298,9 +343,8 @@ function zalogujAdmin(){
         if(currentAdminAction==='wyzeruj'){
             zarobekDzis=0;
             zarobekCalk=0;
-            localStorage.setItem('zarobekDzis',zarobekDzis.toFixed(2));
-            localStorage.setItem('zarobekCalk',zarobekCalk.toFixed(2));
             aktualizujZarobek();
+            zapiszZarobek();
             alert('Zarobek wyzerowany!');
         } else {
             pokazAdminPanel();
@@ -316,7 +360,8 @@ function pokazAdminPanel(){
     const title=document.getElementById('adminActionTitle');
     const kwotaInput=document.getElementById('adminKwota');
     kwotaInput.value=0;
-    title.innerText = currentAdminAction==='dodaj' ? 'Dodaj zarobek' : 'Odejmij zarobek';
+    if(currentAdminAction==='dodaj') title.innerText='Dodaj zarobek';
+    else if(currentAdminAction==='odejmij') title.innerText='Odejmij zarobek';
 }
 function zmienKwote(delta){
     const kw=document.getElementById('adminKwota');
@@ -326,13 +371,13 @@ function zatwierdzAdminAction(){
     const kw=parseFloat(document.getElementById('adminKwota').value);
     if(currentAdminAction==='dodaj') { zarobekDzis += kw; zarobekCalk += kw; }
     else if(currentAdminAction==='odejmij') { zarobekDzis -= kw; zarobekCalk -= kw; if(zarobekDzis<0) zarobekDzis=0; if(zarobekCalk<0) zarobekCalk=0; }
-    localStorage.setItem('zarobekDzis',zarobekDzis.toFixed(2));
-    localStorage.setItem('zarobekCalk',zarobekCalk.toFixed(2));
     aktualizujZarobek();
+    zapiszZarobek();
     document.getElementById('adminPanel').style.display='none';
 }
 function anulujAdminAction(){ document.getElementById('adminPanel').style.display='none'; }
 
+// --- Paragon jako obraz ---
 function kopiujParagon(){
     const paragon=document.getElementById('paragon');
     const range=document.createRange();
@@ -354,4 +399,4 @@ function pobierzParagon(){
 }
 </script>
 </body>
-                           </html>
+    </html>
