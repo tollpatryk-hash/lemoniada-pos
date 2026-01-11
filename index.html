@@ -2,191 +2,177 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Stoisko z Lemonadą</title>
+<title>Stoisko z lemoniadą</title>
 <style>
-  body { font-family: monospace; padding: 20px; background: #f0f0f0; }
-  #loginDiv, #mainDiv { margin-bottom: 20px; }
-  #mainDiv { display: none; }
-  button { margin: 5px; padding: 5px 10px; }
-  #receipt {
+body {
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 20px;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+/* Panel admina */
+#adminPanel {
+    margin-bottom: 20px;
+    display: none; /* tylko dla admina */
+    text-align: center;
+}
+
+#adminPanel input {
+    width: 60px;
+}
+
+/* Paragon */
+.paragon {
+    display: inline-block;
+    padding: 12px 16px;
+    background: white;
+    border: 1px dashed #000;
+    text-align: center;
+    height: auto;
+    min-height: unset;
+    max-width: fit-content;
+    margin-bottom: 20px;
+}
+
+.line {
     white-space: pre;
-    border: 1px solid #000;
-    padding: 10px;
-    margin-top: 10px;
-    background: #fff;
-  }
+    display: block;
+}
+
+.title {
+    font-weight: bold;
+    font-size: 20px;
+    margin: 6px 0;
+    padding-left: 4px;
+}
+
+.date, .item, .thanks {
+    margin: 4px 0;
+}
+
+.sum {
+    margin: 6px 0;
+    padding-left: 8px;
+}
+
+.item {
+    display: flex;
+    justify-content: space-between;
+    width: 220px;
+    margin: 0 auto;
+}
+
+.thanks {
+    padding-left: 2px;
+}
+
+/* Zarobek */
+#zarobek {
+    font-weight: bold;
+    margin-bottom: 20px;
+}
 </style>
 </head>
 <body>
 
-<div id="loginDiv">
-  <h2>Logowanie do stoiska</h2>
-  Login: <input type="text" id="login"><br>
-  Hasło: <input type="password" id="password"><br>
-  <button onclick="login()">Zaloguj</button>
-  <p id="loginMsg"></p>
+<h1>Stoisko z lemoniadą</h1>
+
+<!-- Panel admina -->
+<div id="adminPanel">
+    <label>Dodaj kwotę: <input type="number" id="addAmount" min="0"> zł</label>
+    <button onclick="dodajKwote()">Dodaj</button>
+    <br><br>
+    <label>Odejmij kwotę: <input type="number" id="subtractAmount" min="0"> zł</label>
+    <button onclick="odejmijKwote()">Odejmij</button>
 </div>
 
-<div id="mainDiv">
-  <h2>Stoisko z Lemonadą</h2>
+<!-- Wyświetlenie zarobku -->
+<div id="zarobek">Zarobek: 0 zł</div>
 
-  <div>
-    Lemoniada bez soku: <span id="count1">0</span>
-    <button onclick="changeCount(1,1)">+</button>
-    <button onclick="changeCount(1,-1)">-</button>
-  </div>
+<!-- Paragon -->
+<div class="paragon" id="paragon">
+  <div class="line">==============================</div>
+  <div class="title">LEMONIADA</div>
+  <div class="line">==============================</div>
 
-  <div>
-    Lemoniada z sokiem: <span id="count2">0</span>
-    <button onclick="changeCount(2,1)">+</button>
-    <button onclick="changeCount(2,-1)">-</button>
-  </div>
+  <div class="date" id="date">Data: --</div>
 
-  <h3>Do zapłaty: <span id="total">0.00</span> zł</h3>
+  <div class="line">------------------------------</div>
 
-  <button onclick="printReceipt()">Wyświetl paragon</button>
-  <button onclick="downloadReceiptAsImage()">Pobierz paragon jako obraz</button>
-  <button onclick="copyReceiptToClipboard()">Skopiuj paragon jako obraz</button>
-  <button onclick="resetEarnings()">Wyzeruj zarobki (admin)</button>
+  <div class="item"><span>Lem. bez soku</span><span>x1 5.00 zł</span></div>
+  <div class="item"><span>Lem. z sokiem</span><span>x2 12.00 zł</span></div>
 
-  <h3>Dzisiaj: <span id="dailyTotal">0.00</span> zł</h3>
-  <h3>Wszystkie dni: <span id="allTimeTotal">0.00</span> zł</h3>
+  <div class="line">------------------------------</div>
 
-  <div id="receipt"></div>
+  <div class="sum" id="suma">SUMA: 17.00 zł</div>
+
+  <div class="line">==============================</div>
+
+  <div class="thanks">Dziękujemy za zakupy!</div>
+  <div class="line">==============================</div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
-/* ===== USTAWIENIA ===== */
-const ADMIN_PASSWORD = "admin123"; // <<< ZMIEŃ HASŁO TUTAJ
+// --- Zarobek i admin ---
+let zarobek = 0;
 
-let price1 = 2.5;
-let price2 = 3.0;
-let count1 = 0;
-let count2 = 0;
+// Sprawdzenie czy jesteś adminem (na razie hardcode 'true')
+const isAdmin = true; 
+if(isAdmin) document.getElementById('adminPanel').style.display = 'block';
 
-let dailyTotal = parseFloat(localStorage.getItem("dailyTotal")) || 0;
-let allTimeTotal = parseFloat(localStorage.getItem("allTimeTotal")) || 0;
-
-document.getElementById("dailyTotal").innerText = dailyTotal.toFixed(2);
-document.getElementById("allTimeTotal").innerText = allTimeTotal.toFixed(2);
-
-/* ===== LOGOWANIE ===== */
-function login(){
-  if(
-    document.getElementById("login").value === "stoisko" &&
-    document.getElementById("password").value === "lemoniada123"
-  ){
-    loginDiv.style.display = "none";
-    mainDiv.style.display = "block";
-  } else {
-    loginMsg.innerText = "Błędny login lub hasło!";
-  }
+// Funkcje admina
+function dodajKwote() {
+    const kwota = parseFloat(document.getElementById('addAmount').value);
+    if(!isNaN(kwota)) {
+        zarobek += kwota;
+        aktualizujZarobek();
+    }
 }
 
-/* ===== LICZNIKI ===== */
-function changeCount(type, delta){
-  if(type === 1){
-    count1 = Math.max(0, count1 + delta);
-    count1Span.innerText = count1;
-  } else {
-    count2 = Math.max(0, count2 + delta);
-    count2Span.innerText = count2;
-  }
-  updateTotal();
+function odejmijKwote() {
+    const kwota = parseFloat(document.getElementById('subtractAmount').value);
+    if(!isNaN(kwota)) {
+        zarobek -= kwota;
+        if(zarobek < 0) zarobek = 0;
+        aktualizujZarobek();
+    }
 }
 
-function updateTotal(){
-  total.innerText = (count1*price1 + count2*price2).toFixed(2);
+// Aktualizacja wyświetlania
+function aktualizujZarobek() {
+    document.getElementById('zarobek').innerText = `Zarobek: ${zarobek.toFixed(2)} zł`;
 }
 
-/* ===== PARAGON ===== */
-function printReceipt(){
-  let totalPrice = count1*price1 + count2*price2;
-  let text =
-`------ PARAGON ------
-${new Date().toLocaleString()}
----------------------
-Bez soku x${count1} = ${(count1*price1).toFixed(2)} zł
-Z sokiem x${count2} = ${(count2*price2).toFixed(2)} zł
----------------------
-SUMA: ${totalPrice.toFixed(2)} zł
----------------------
-Dziękujemy!
-`;
-
-  receipt.innerText = text;
-
-  dailyTotal += totalPrice;
-  allTimeTotal += totalPrice;
-
-  localStorage.setItem("dailyTotal", dailyTotal);
-  localStorage.setItem("allTimeTotal", allTimeTotal);
-
-  dailyTotalSpan.innerText = dailyTotal.toFixed(2);
-  allTimeTotalSpan.innerText = allTimeTotal.toFixed(2);
-
-  count1 = count2 = 0;
-  count1Span.innerText = 0;
-  count2Span.innerText = 0;
-  updateTotal();
+// --- Paragon ---
+function ustawDate() {
+    const dzis = new Date();
+    const dzien = String(dzis.getDate()).padStart(2,'0');
+    const mies = String(dzis.getMonth()+1).padStart(2,'0');
+    const rok = dzis.getFullYear();
+    const godz = String(dzis.getHours()).padStart(2,'0');
+    const min = String(dzis.getMinutes()).padStart(2,'0');
+    const sek = String(dzis.getSeconds()).padStart(2,'0');
+    document.getElementById('date').innerText = `Data: ${dzien}.${mies}.${rok}, ${godz}:${min}:${sek}`;
 }
 
-/* ===== RESET ZAROBKÓW (HASŁO ADMINA) ===== */
-function resetEarnings(){
-  let pass = prompt("Podaj hasło admina:");
+// Wywołanie daty przy starcie
+ustawDate();
+setInterval(ustawDate, 1000); // aktualizacja co sekundę
 
-  if(pass !== ADMIN_PASSWORD){
-    alert("❌ Złe hasło!");
-    return;
-  }
-
-  dailyTotal = 0;
-  allTimeTotal = 0;
-
-  localStorage.setItem("dailyTotal", 0);
-  localStorage.setItem("allTimeTotal", 0);
-
-  dailyTotalSpan.innerText = "0.00";
-  allTimeTotalSpan.innerText = "0.00";
-
-  alert("✅ Zarobki wyzerowane");
+// --- SUMA na paragonie ---
+function aktualizujSume() {
+    const suma = 5 + 12; // tutaj przykładowa logika produktów
+    document.getElementById('suma').innerText = `SUMA: ${suma.toFixed(2)} zł`;
 }
+aktualizujSume();
 
-/* ===== OBRAZ PARAGONU ===== */
-function downloadReceiptAsImage(){
-  if(!receipt.innerText.trim()){
-    alert("Brak paragonu!");
-    return;
-  }
-  html2canvas(receipt).then(c=>{
-    let a = document.createElement("a");
-    a.href = c.toDataURL();
-    a.download = "paragon.png";
-    a.click();
-  });
-}
-
-async function copyReceiptToClipboard(){
-  if(!receipt.innerText.trim()){
-    alert("Brak paragonu!");
-    return;
-  }
-  const canvas = await html2canvas(receipt);
-  canvas.toBlob(b=>{
-    navigator.clipboard.write([new ClipboardItem({"image/png": b})]);
-    alert("📋 Skopiowano do schowka");
-  });
-}
-
-/* ===== SKRÓTY ===== */
-const count1Span = document.getElementById("count1");
-const count2Span = document.getElementById("count2");
-const total = document.getElementById("total");
-const receipt = document.getElementById("receipt");
-const dailyTotalSpan = document.getElementById("dailyTotal");
-const allTimeTotalSpan = document.getElementById("allTimeTotal");
 </script>
 
 </body>
