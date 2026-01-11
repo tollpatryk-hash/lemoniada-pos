@@ -121,6 +121,9 @@ body {
 }
 </style>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <!-- Biblioteka do generowania obrazu PNG -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
@@ -206,6 +209,19 @@ body {
 </div>
 
 <script>
+// --- Firebase config ---
+const firebaseConfig = {
+  apiKey: "TWOJE_APIKEY",
+  authDomain: "TWOJ_PROJEKT.firebaseapp.com",
+  databaseURL: "https://TWOJ_PROJEKT-default-rtdb.firebaseio.com",
+  projectId: "TWOJ_PROJEKT",
+  storageBucket: "TWOJ_PROJEKT.appspot.com",
+  messagingSenderId: "NUMER",
+  appId: "APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 // --- Logowanie użytkownika ---
 const users = { "stoisko":"lemoniada123", "admin":"admin123" };
 function zaloguj(){
@@ -224,6 +240,9 @@ function zaloguj(){
         aktualizujParagon();
         aktualizujWartoscZakupu();
         aktualizujZarobek();
+        // odczyt zarobku z Firebase
+        db.ref('zarobekDzis').once('value').then(snap=>{ if(snap.exists()) zarobekDzis=snap.val(); aktualizujZarobek(); });
+        db.ref('zarobekCalk').once('value').then(snap=>{ if(snap.exists()) zarobekCalk=snap.val(); aktualizujZarobek(); });
     } else {
         document.getElementById('loginError').innerText="Błędny login lub hasło!";
     }
@@ -283,6 +302,8 @@ function generujParagon(){
     aktualizujParagon();
     zarobekDzis += sumaZakupu;
     zarobekCalk += sumaZakupu;
+    db.ref('zarobekDzis').set(zarobekDzis);
+    db.ref('zarobekCalk').set(zarobekCalk);
     aktualizujZarobek();
     alert('Paragon wygenerowany i zarobek zapisany!');
 }
@@ -314,6 +335,8 @@ function zalogujAdmin(){
         document.getElementById('loginAdminPanel').style.display='none';
         if(currentAdminAction==='wyzeruj'){
             zarobekDzis=0; zarobekCalk=0;
+            db.ref('zarobekDzis').set(zarobekDzis);
+            db.ref('zarobekCalk').set(zarobekCalk);
             aktualizujZarobek();
         } else {
             pokazAdminPanel();
@@ -339,8 +362,18 @@ function zmienKwote(delta){
 }
 function zatwierdzAdminAction(){
     const kw=parseFloat(document.getElementById('adminKwota').value);
-    if(currentAdminAction==='dodaj') { zarobekDzis += kw; zarobekCalk += kw; }
-    else if(currentAdminAction==='odejmij') { zarobekDzis -= kw; zarobekCalk -= kw; if(zarobekDzis<0) zarobekDzis=0; if(zarobekCalk<0) zarobekCalk=0; }
+    if(currentAdminAction==='dodaj') { 
+        zarobekDzis += kw; 
+        zarobekCalk += kw; 
+    }
+    else if(currentAdminAction==='odejmij') { 
+        zarobekDzis -= kw; 
+        zarobekCalk -= kw; 
+        if(zarobekDzis<0) zarobekDzis=0; 
+        if(zarobekCalk<0) zarobekCalk=0; 
+    }
+    db.ref('zarobekDzis').set(zarobekDzis);
+    db.ref('zarobekCalk').set(zarobekCalk);
     aktualizujZarobek();
     document.getElementById('adminPanel').style.display='none';
 }
