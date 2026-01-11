@@ -13,8 +13,14 @@ body {
     padding: 20px;
 }
 
-h1 {
+/* Logowanie */
+#loginPanel {
+    text-align: center;
     margin-bottom: 20px;
+}
+
+#loginPanel input {
+    margin: 5px;
 }
 
 /* Panel admina */
@@ -26,6 +32,12 @@ h1 {
 
 #adminPanel input {
     width: 60px;
+}
+
+/* Zarobek */
+#zarobek {
+    font-weight: bold;
+    margin-bottom: 20px;
 }
 
 /* Paragon */
@@ -50,7 +62,7 @@ h1 {
     font-weight: bold;
     font-size: 20px;
     margin: 6px 0;
-    padding-left: 4px;
+    padding-left: 4px;  /* lekko w lewo */
 }
 
 .date, .item, .thanks {
@@ -59,7 +71,7 @@ h1 {
 
 .sum {
     margin: 6px 0;
-    padding-left: 8px;
+    padding-left: 8px;  /* SUMA raz w prawo */
 }
 
 .item {
@@ -70,19 +82,21 @@ h1 {
 }
 
 .thanks {
-    padding-left: 2px;
-}
-
-/* Zarobek */
-#zarobek {
-    font-weight: bold;
-    margin-bottom: 20px;
+    padding-left: 2px;  /* stopka lekko w lewo */
 }
 </style>
 </head>
 <body>
 
 <h1>Stoisko z lemoniadą</h1>
+
+<!-- Logowanie -->
+<div id="loginPanel">
+    <input type="text" id="login" placeholder="Login">
+    <input type="password" id="password" placeholder="Hasło">
+    <button onclick="zaloguj()">Zaloguj</button>
+    <div id="loginError" style="color:red; margin-top:5px;"></div>
+</div>
 
 <!-- Panel admina -->
 <div id="adminPanel">
@@ -94,10 +108,10 @@ h1 {
 </div>
 
 <!-- Wyświetlenie zarobku -->
-<div id="zarobek">Zarobek: 0 zł</div>
+<div id="zarobek" style="display:none;">Zarobek: 0 zł</div>
 
 <!-- Paragon -->
-<div class="paragon" id="paragon">
+<div class="paragon" id="paragon" style="display:none;">
   <div class="line">==============================</div>
   <div class="title">LEMONIADA</div>
   <div class="line">==============================</div>
@@ -120,14 +134,32 @@ h1 {
 </div>
 
 <script>
-// --- Zarobek i admin ---
+// --- Logowanie ---
+const adminLogin = "admin";
+const adminPass = "1234";
+
+function zaloguj() {
+    const login = document.getElementById('login').value;
+    const pass = document.getElementById('password').value;
+    if(login === adminLogin && pass === adminPass) {
+        // Admin
+        document.getElementById('adminPanel').style.display = 'block';
+        document.getElementById('zarobek').style.display = 'block';
+        document.getElementById('paragon').style.display = 'block';
+        document.getElementById('loginPanel').style.display = 'none';
+    } else if(login === "user" && pass === "123") {
+        // Zwykły użytkownik
+        document.getElementById('zarobek').style.display = 'block';
+        document.getElementById('paragon').style.display = 'block';
+        document.getElementById('loginPanel').style.display = 'none';
+    } else {
+        document.getElementById('loginError').innerText = "Błędny login lub hasło!";
+    }
+}
+
+// --- Zarobek ---
 let zarobek = 0;
 
-// Sprawdzenie czy jesteś adminem (na razie hardcode 'true')
-const isAdmin = true; 
-if(isAdmin) document.getElementById('adminPanel').style.display = 'block';
-
-// Funkcje admina
 function dodajKwote() {
     const kwota = parseFloat(document.getElementById('addAmount').value);
     if(!isNaN(kwota)) {
@@ -145,7 +177,6 @@ function odejmijKwote() {
     }
 }
 
-// Aktualizacja wyświetlania
 function aktualizujZarobek() {
     document.getElementById('zarobek').innerText = `Zarobek: ${zarobek.toFixed(2)} zł`;
 }
@@ -162,17 +193,14 @@ function ustawDate() {
     document.getElementById('date').innerText = `Data: ${dzien}.${mies}.${rok}, ${godz}:${min}:${sek}`;
 }
 
-// Wywołanie daty przy starcie
 ustawDate();
-setInterval(ustawDate, 1000); // aktualizacja co sekundę
+setInterval(ustawDate, 1000);
 
-// --- SUMA na paragonie ---
 function aktualizujSume() {
-    const suma = 5 + 12; // tutaj przykładowa logika produktów
+    const suma = 5 + 12; // przykładowa logika produktów
     document.getElementById('suma').innerText = `SUMA: ${suma.toFixed(2)} zł`;
 }
 aktualizujSume();
-
 </script>
 
 </body>
