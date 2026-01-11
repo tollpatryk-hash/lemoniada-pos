@@ -120,6 +120,9 @@ body {
     margin: 5px;
 }
 </style>
+
+<!-- html2canvas do pobierania paragonu jako obraz -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -309,7 +312,14 @@ function zalogujAdmin(){
     const pass=document.getElementById('adminPass').value;
     if(login==='admin' && pass==='admin123'){
         document.getElementById('loginAdminPanel').style.display='none';
-        pokazAdminPanel();
+        if(currentAdminAction==='wyzeruj'){
+            zarobekDzis=0;
+            zarobekCalk=0;
+            aktualizujZarobek();
+            alert('Zarobek wyzerowany!');
+        } else {
+            pokazAdminPanel();
+        }
     } else {
         document.getElementById('loginAdminError').innerText='Błędny login lub hasło!';
     }
@@ -324,7 +334,6 @@ function pokazAdminPanel(){
     kwotaInput.value=0;
     if(currentAdminAction==='dodaj') title.innerText='Dodaj zarobek';
     else if(currentAdminAction==='odejmij') title.innerText='Odejmij zarobek';
-    else if(currentAdminAction==='wyzeruj') title.innerText='Wyzeruj zarobek';
 }
 function zmienKwote(delta){
     const kw=document.getElementById('adminKwota');
@@ -334,7 +343,6 @@ function zatwierdzAdminAction(){
     const kw=parseFloat(document.getElementById('adminKwota').value);
     if(currentAdminAction==='dodaj') { zarobekDzis += kw; zarobekCalk += kw; }
     else if(currentAdminAction==='odejmij') { zarobekDzis -= kw; zarobekCalk -= kw; if(zarobekDzis<0) zarobekDzis=0; if(zarobekCalk<0) zarobekCalk=0; }
-    else if(currentAdminAction==='wyzeruj') { zarobekDzis=0; zarobekCalk=0; }
     aktualizujZarobek();
     document.getElementById('adminPanel').style.display='none';
 }
@@ -355,11 +363,12 @@ function kopiujParagon(){
 }
 function pobierzParagon(){
     const paragon=document.getElementById('paragon');
-    const blob=new Blob([paragon.innerText],{type:'text/plain'});
-    const link=document.createElement('a');
-    link.href=URL.createObjectURL(blob);
-    link.download='paragon.txt';
-    link.click();
+    html2canvas(paragon).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'paragon.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    });
 }
 </script>
 </body>
