@@ -40,8 +40,9 @@ body {
     align-items: center;
 }
 
-.product span {
-    width: 120px;
+.product span.ilosc {
+    width: 30px;
+    text-align: center;
 }
 
 .product button {
@@ -95,6 +96,7 @@ body {
 
 <!-- Logowanie -->
 <div id="loginPanel">
+    <div style="font-weight:bold; margin-bottom:5px;">Logowanie</div>
     <input type="text" id="login" placeholder="Login">
     <input type="password" id="password" placeholder="Hasło">
     <button onclick="zaloguj()">Zaloguj</button>
@@ -107,16 +109,16 @@ body {
 <!-- Lista produktów -->
 <div id="products" style="display:none;">
     <div class="product">
-        <span>Lem. bez soku</span>
-        <button onclick="zmienIlosc('bezSoku',-1)">-</button>
-        <span id="bezSoku">0</span>
+        <span id="bezSoku" class="ilosc">0</span>
         <button onclick="zmienIlosc('bezSoku',1)">+</button>
+        <button onclick="zmienIlosc('bezSoku',-1)">-</button>
+        <span>Lem. bez soku</span>
     </div>
     <div class="product">
-        <span>Lem. z sokiem</span>
-        <button onclick="zmienIlosc('zSokiem',-1)">-</button>
-        <span id="zSokiem">0</span>
+        <span id="zSokiem" class="ilosc">0</span>
         <button onclick="zmienIlosc('zSokiem',1)">+</button>
+        <button onclick="zmienIlosc('zSokiem',-1)">-</button>
+        <span>Lem. z sokiem</span>
     </div>
 </div>
 
@@ -175,6 +177,7 @@ function zaloguj(){
         }
         ustawDate();
         aktualizujParagon();
+        aktualizujWartoscZakupu();
     } else {
         document.getElementById('loginError').innerText="Błędny login lub hasło!";
     }
@@ -182,8 +185,8 @@ function zaloguj(){
 
 // --- Produkty ---
 let produkty = {
-    "bezSoku": {nazwa:"Lem. bez soku", cena:5, ilosc:0},
-    "zSokiem": {nazwa:"Lem. z sokiem", cena:6, ilosc:0}
+    "bezSoku": {nazwa:"Lem. bez soku", cena:2.5, ilosc:0},
+    "zSokiem": {nazwa:"Lem. z sokiem", cena:3, ilosc:0}
 };
 
 function zmienIlosc(prod, delta){
