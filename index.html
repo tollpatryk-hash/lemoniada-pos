@@ -4,60 +4,48 @@
 <meta charset="UTF-8">
 <title>Stoisko z lemoniadą</title>
 <style>
-body {
-    font-family: monospace;
-    background: #f0f0f0;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-#loginPanel { text-align:center; margin-bottom:20px; }
-#loginPanel h2 { font-size:28px; font-weight:bold; margin-bottom:10px; }
-#loginPanel input { margin:5px; }
+body { font-family: monospace; background: #f0f0f0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+#loginPanel { text-align: center; margin-bottom: 20px; }
+#loginPanel h2 { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+#loginPanel input { margin: 5px; }
 
-#header { display:none; font-size:24px; font-weight:bold; margin-bottom:20px; text-align:center; }
-.product { display:flex; justify-content:space-between; width:300px; margin:5px 0; align-items:center; }
-.product span.ilosc { width:30px; text-align:center; }
-.product button { width:30px; margin-left:5px; }
+/* Nagłówek stoisko */
+#header { display: none; font-size: 24px; font-weight: bold; margin-bottom: 20px; }
 
-#buttons { display:none; flex-wrap:wrap; gap:10px; margin:10px 0; }
-#zarobek, #zarobekCalkowity { font-weight:bold; margin:5px 0; }
-#wartoscZakupu { font-weight:bold; margin-bottom:10px; }
+/* Lista produktów */
+.product { display: flex; justify-content: space-between; width: 300px; margin: 5px 0; align-items: center; }
+.product span.ilosc { width: 30px; text-align: center; }
+.product button { width: 30px; margin-left: 5px; }
 
-#paragon {
-    background:white;
-    padding:10px 15px;
-    border:1px dashed black;
-    text-align:center;
-    min-width:250px;
-}
-.parLine { white-space: pre; display:block; }
-.parTitle { font-weight:bold; font-size:18px; margin:6px 0; }
-.parItem { display:flex; justify-content:space-between; margin:2px 0; }
-.parSum { font-weight:bold; margin:6px 0; }
-.parThanks { margin-top:4px; }
+/* Przyciski */
+#buttons { display: none; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
 
-#adminPanel, #loginAdminPanel {
-    display:none;
-    position:fixed;
-    background:#fff;
-    border:2px solid black;
-    padding:15px;
-    z-index:100;
-    top:30%;
-    left:50%;
-    transform:translate(-50%, -30%);
-    min-width:300px;
-}
-#adminPanel input[type=number] { width:60px; text-align:center; }
-#adminPanel button, #loginAdminPanel button { margin:5px; }
-#loginAdminPanel input { margin:5px; }
+/* Zarobek */
+#zarobek, #zarobekCalkowity { font-weight: bold; margin: 5px 0; }
+
+/* Wartość zakupu */
+#wartoscZakupu { font-weight: bold; margin-bottom: 10px; }
+
+/* Paragon */
+#paragon { background: white; padding: 10px 15px; border: 1px dashed black; text-align: center; min-width: 250px; display: none; }
+.parLine { white-space: pre; display: block; }
+.parTitle { font-weight: bold; font-size: 18px; margin: 6px 0; }
+.parSum { font-weight: bold; margin: 6px 0; }
+.parThanks { margin-top: 4px; }
+
+/* Panel admina dynamiczny */
+#adminPanel { display: none; position: fixed; background: #fff; border: 2px solid black; padding: 15px; z-index: 100; top: 30%; left: 50%; transform: translate(-50%, -30%); min-width: 300px; }
+#adminPanel input[type=number] { width: 60px; text-align: center; }
+#adminPanel button { margin: 5px; }
+#loginAdminPanel { display: none; position: fixed; background: #fff; border: 2px solid black; padding: 15px; z-index: 100; top: 30%; left: 50%; transform: translate(-50%, -30%); }
+#loginAdminPanel input { margin: 5px; }
 </style>
+
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
+<!-- Logowanie użytkownika -->
 <div id="loginPanel">
     <h2>Logowanie</h2>
     <input type="text" id="login" placeholder="Login">
@@ -66,8 +54,10 @@ body {
     <div id="loginError" style="color:red; margin-top:5px;"></div>
 </div>
 
+<!-- Nagłówek stoisko -->
 <div id="header">Stoisko z lemoniadą</div>
 
+<!-- Produkty -->
 <div id="products" style="display:none;">
     <div class="product">
         <span>Lem. bez soku</span>
@@ -83,6 +73,7 @@ body {
     </div>
 </div>
 
+<!-- Przyciski -->
 <div id="buttons">
     <button onclick="kopiujParagon()">Kopiuj paragon jako obraz</button>
     <button onclick="pobierzParagon()">Pobierz paragon jako obraz</button>
@@ -92,11 +83,14 @@ body {
     <button onclick="wezLoginAdmin('wyzeruj')">Wyzeruj zarobek (admin)</button>
 </div>
 
+<!-- Zarobek -->
 <div id="zarobek" style="display:none;">Zarobek z dzisiaj: 0.00 zł</div>
 <div id="zarobekCalkowity" style="display:none;">Zarobek łącznie: 0.00 zł</div>
+
 <div id="wartoscZakupu" style="display:none;">Wartość zakupu: 0 zł</div>
 
-<div id="paragon" style="display:none;">
+<!-- Paragon -->
+<div id="paragon">
     <div class="parLine">==============================</div>
     <div class="parTitle">LEMONIADA</div>
     <div class="parLine">==============================</div>
@@ -110,6 +104,7 @@ body {
     <div class="parLine">==============================</div>
 </div>
 
+<!-- Logowanie admina -->
 <div id="loginAdminPanel">
     <div>Wpisz login i hasło admina</div>
     <input type="text" id="adminLogin" placeholder="Login"><br>
@@ -119,6 +114,7 @@ body {
     <div id="loginAdminError" style="color:red; margin-top:5px;"></div>
 </div>
 
+<!-- Panel admina akcji -->
 <div id="adminPanel">
     <div id="adminActionTitle"></div>
     Kwota: <input type="number" id="adminKwota" value="0"><br>
@@ -129,11 +125,11 @@ body {
 </div>
 
 <script>
-// --- Logowanie lokalne ---
+// --- Logowanie użytkownika ---
 const users = { "stoisko":"lemoniada123", "admin":"admin123" };
 function zaloguj(){
-    const login=document.getElementById('login').value;
-    const pass=document.getElementById('password').value;
+    const login = document.getElementById('login').value;
+    const pass = document.getElementById('password').value;
     if(users[login] && users[login]===pass){
         document.getElementById('loginPanel').style.display='none';
         document.getElementById('header').style.display='block';
@@ -144,8 +140,8 @@ function zaloguj(){
         document.getElementById('zarobek').style.display='block';
         document.getElementById('zarobekCalkowity').style.display='block';
         ustawDate();
-        aktualizujWartoscZakupu();
         aktualizujZarobek();
+        aktualizujWartoscZakupu();
     } else {
         document.getElementById('loginError').innerText="Błędny login lub hasło!";
     }
@@ -156,10 +152,6 @@ let produkty = {
     "bezSoku": {nazwa:"Lem. bez soku", cena:2.5, ilosc:0},
     "zSokiem": {nazwa:"Lem. z sokiem", cena:3, ilosc:0}
 };
-let sumaZakupu = 0;
-let zarobekDzis = 0;
-let zarobekCalk = 0;
-
 function zmienIlosc(prod, delta){
     produkty[prod].ilosc += delta;
     if(produkty[prod].ilosc<0) produkty[prod].ilosc=0;
@@ -167,7 +159,11 @@ function zmienIlosc(prod, delta){
     aktualizujWartoscZakupu();
 }
 
-// --- Wartość zakupu ---
+// --- Wartość zakupu / paragon ---
+let sumaZakupu = 0;
+let zarobekDzis = parseFloat(localStorage.getItem('zarobekDzis')) || 0;
+let zarobekCalk = parseFloat(localStorage.getItem('zarobekCalk')) || 0;
+
 function aktualizujWartoscZakupu(){
     let suma=0;
     for(let p in produkty) suma += produkty[p].ilosc*produkty[p].cena;
@@ -175,7 +171,6 @@ function aktualizujWartoscZakupu(){
     document.getElementById('wartoscZakupu').innerText=`Wartość zakupu: ${suma.toFixed(2)} zł`;
 }
 
-// --- Paragon ---
 function ustawDate(){
     const dzis=new Date();
     const dz=String(dzis.getDate()).padStart(2,'0');
@@ -186,30 +181,46 @@ function ustawDate(){
     const sek=String(dzis.getSeconds()).padStart(2,'0');
     document.getElementById('parDate').innerText=`Data: ${dz}.${mies}.${rok}, ${godz}:${min}:${sek}`;
 }
-function aktualizujParagon(){
+setInterval(ustawDate,1000);
+
+// --- Generuj paragon ---
+function generujParagon(){
     const par=document.getElementById('parItems');
     par.innerHTML='';
+    let suma=0;
     for(let p in produkty){
         if(produkty[p].ilosc>0){
+            let nazwa = produkty[p].nazwa;
+            let ilosc = produkty[p].ilosc;
+            let cena = (produkty[p].ilosc*produkty[p].cena).toFixed(2);
+            let line = nazwa + ' x' + ilosc;
+            while(line.length < 28) line += ' ';
+            line += cena + ' zł';
             const div = document.createElement('div');
             div.className='parItem';
-            div.innerHTML=`<span>${produkty[p].nazwa} x${produkty[p].ilosc}</span><span>${(produkty[p].ilosc*produkty[p].cena).toFixed(2)} zł</span>`;
+            div.innerText=line;
             par.appendChild(div);
+            suma += produkty[p].ilosc*produkty[p].cena;
         }
     }
-}
-function generujParagon(){
-    aktualizujParagon();
-    zarobekDzis += sumaZakupu;
-    zarobekCalk += sumaZakupu;
+    sumaZakupu = suma;
+    document.getElementById('parSum').innerText=`SUMA: ${suma.toFixed(2)} zł`;
+
+    // Zapis zarobku i reset liczników
+    zarobekDzis += suma;
+    zarobekCalk += suma;
     aktualizujZarobek();
-    // wyzeruj liczniki produktów
-    for(let p in produkty){ produkty[p].ilosc=0; document.getElementById(p).innerText=0; }
+    for(let p in produkty){
+        produkty[p].ilosc=0;
+        document.getElementById(p).innerText=0;
+    }
     aktualizujWartoscZakupu();
+    localStorage.setItem('zarobekDzis', zarobekDzis);
+    localStorage.setItem('zarobekCalk', zarobekCalk);
     alert('Paragon wygenerowany i zarobek zapisany!');
 }
 
-// --- Zarobek ---
+// --- Aktualizacja zarobku ---
 function aktualizujZarobek(){
     document.getElementById('zarobek').innerText = `Zarobek z dzisiaj: ${zarobekDzis.toFixed(2)} zł`;
     document.getElementById('zarobekCalkowity').innerText = `Zarobek łącznie: ${zarobekCalk.toFixed(2)} zł`;
@@ -230,9 +241,19 @@ function zalogujAdmin(){
     const pass=document.getElementById('adminPass').value;
     if(login==='admin' && pass==='admin123'){
         document.getElementById('loginAdminPanel').style.display='none';
-        if(currentAdminAction==='wyzeruj'){ zarobekDzis=0; zarobekCalk=0; aktualizujZarobek(); alert('Zarobek wyzerowany!'); }
-        else { pokazAdminPanel(); }
-    } else { document.getElementById('loginAdminError').innerText='Błędny login lub hasło!'; }
+        if(currentAdminAction==='wyzeruj'){
+            zarobekDzis=0;
+            zarobekCalk=0;
+            aktualizujZarobek();
+            localStorage.setItem('zarobekDzis', zarobekDzis);
+            localStorage.setItem('zarobekCalk', zarobekCalk);
+            alert('Zarobek wyzerowany!');
+        } else {
+            pokazAdminPanel();
+        }
+    } else {
+        document.getElementById('loginAdminError').innerText='Błędny login lub hasło!';
+    }
 }
 function pokazAdminPanel(){
     const panel=document.getElementById('adminPanel');
@@ -240,17 +261,20 @@ function pokazAdminPanel(){
     const title=document.getElementById('adminActionTitle');
     const kwotaInput=document.getElementById('adminKwota');
     kwotaInput.value=0;
-    title.innerText = currentAdminAction==='dodaj' ? 'Dodaj zarobek' : 'Odejmij zarobek';
+    if(currentAdminAction==='dodaj') title.innerText='Dodaj zarobek';
+    else if(currentAdminAction==='odejmij') title.innerText='Odejmij zarobek';
 }
 function zmienKwote(delta){
     const kw=document.getElementById('adminKwota');
-    kw.value = Math.max(0, parseFloat(kw.value)+delta);
+    kw.value = Math.max(0, parseFloat(kw.value) + delta);
 }
 function zatwierdzAdminAction(){
     const kw=parseFloat(document.getElementById('adminKwota').value);
-    if(currentAdminAction==='dodaj'){ zarobekDzis += kw; zarobekCalk += kw; }
-    else if(currentAdminAction==='odejmij'){ zarobekDzis -= kw; zarobekCalk -= kw; if(zarobekDzis<0) zarobekDzis=0; if(zarobekCalk<0) zarobekCalk=0; }
+    if(currentAdminAction==='dodaj') { zarobekDzis += kw; zarobekCalk += kw; }
+    else if(currentAdminAction==='odejmij') { zarobekDzis -= kw; zarobekCalk -= kw; if(zarobekDzis<0) zarobekDzis=0; if(zarobekCalk<0) zarobekCalk=0; }
     aktualizujZarobek();
+    localStorage.setItem('zarobekDzis', zarobekDzis);
+    localStorage.setItem('zarobekCalk', zarobekCalk);
     document.getElementById('adminPanel').style.display='none';
 }
 function anulujAdminAction(){ document.getElementById('adminPanel').style.display='none'; }
@@ -275,8 +299,6 @@ function pobierzParagon(){
         link.click();
     });
 }
-
-setInterval(ustawDate,1000);
 </script>
 </body>
     </html>
