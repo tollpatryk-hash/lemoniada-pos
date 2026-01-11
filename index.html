@@ -53,15 +53,16 @@ body {
 
 /* Przyciski */
 #buttons {
-    display: flex;
+    display: none;
+    flex-wrap: wrap;
     gap: 10px;
     margin: 10px 0;
 }
 
 /* Zarobek */
-#zarobek {
+#zarobek, #zarobekCalkowity {
     font-weight: bold;
-    margin: 10px 0;
+    margin: 5px 0;
 }
 
 /* Wartość zakupu */
@@ -151,15 +152,19 @@ body {
 </div>
 
 <!-- Przyciski -->
-<div id="buttons" style="display:none;">
+<div id="buttons">
     <button onclick="kopiujParagon()">Kopiuj paragon jako obraz</button>
     <button onclick="pobierzParagon()">Pobierz paragon jako obraz</button>
+    <button onclick="generujParagon()">Generuj paragon</button>
     <button onclick="wezLoginAdmin('odejmij')">Odejmij zarobek (admin)</button>
     <button onclick="wezLoginAdmin('dodaj')">Dodaj zarobek (admin)</button>
     <button onclick="wezLoginAdmin('wyzeruj')">Wyzeruj zarobek (admin)</button>
 </div>
 
-<div id="zarobek" style="display:none;">Zarobek: 0 zł</div>
+<!-- Zarobek -->
+<div id="zarobek" style="display:none;">Zarobek z dzisiaj: 0.00 zł</div>
+<div id="zarobekCalkowity" style="display:none;">Zarobek łącznie: 0.00 zł</div>
+
 <div id="wartoscZakupu" style="display:none;">Wartość zakupu: 0 zł</div>
 
 <!-- Paragon -->
@@ -211,9 +216,11 @@ function zaloguj(){
         document.getElementById('paragon').style.display='block';
         document.getElementById('wartoscZakupu').style.display='block';
         document.getElementById('zarobek').style.display='block';
+        document.getElementById('zarobekCalkowity').style.display='block';
         ustawDate();
         aktualizujParagon();
         aktualizujWartoscZakupu();
+        aktualizujZarobek();
     } else {
         document.getElementById('loginError').innerText="Błędny login lub hasło!";
     }
@@ -234,6 +241,9 @@ function zmienIlosc(prod, delta){
 
 // --- Wartość zakupu / paragon ---
 let sumaZakupu = 0;
+let zarobekDzis = 0;
+let zarobekCalk = 0;
+
 function aktualizujWartoscZakupu(){
     let suma=0;
     for(let p in produkty) suma += produkty[p].ilosc*produkty[p].cena;
@@ -265,9 +275,23 @@ function aktualizujParagon(){
     }
 }
 
+// --- Generuj paragon ---
+function generujParagon(){
+    aktualizujParagon();
+    zarobekDzis += sumaZakupu;
+    zarobekCalk += sumaZakupu;
+    aktualizujZarobek();
+    alert('Paragon wygenerowany i zarobek zapisany!');
+}
+
+// --- Aktualizacja zarobku ---
+function aktualizujZarobek(){
+    document.getElementById('zarobek').innerText = `Zarobek z dzisiaj: ${zarobekDzis.toFixed(2)} zł`;
+    document.getElementById('zarobekCalkowity').innerText = `Zarobek łącznie: ${zarobekCalk.toFixed(2)} zł`;
+}
+
 // --- Zarobek admin ---
-let zarobek=0;
-let currentAdminAction=''; // 'dodaj','odejmij','wyzeruj'
+let currentAdminAction='';
 
 // --- Obsługa przycisków admina ---
 function wezLoginAdmin(action){
@@ -307,12 +331,11 @@ function zmienKwote(delta){
     kw.value = Math.max(0, parseFloat(kw.value) + delta);
 }
 function zatwierdzAdminAction(){
-    const kw=document.getElementById('adminKwota').value;
-    if(currentAdminAction==='dodaj') zarobek += parseFloat(kw);
-    else if(currentAdminAction==='odejmij') zarobek -= parseFloat(kw);
-    if(zarobek<0) zarobek=0;
-    else if(currentAdminAction==='wyzeruj') zarobek=0;
-    document.getElementById('zarobek').innerText=`Zarobek: ${zarobek.toFixed(2)} zł`;
+    const kw=parseFloat(document.getElementById('adminKwota').value);
+    if(currentAdminAction==='dodaj') { zarobekDzis += kw; zarobekCalk += kw; }
+    else if(currentAdminAction==='odejmij') { zarobekDzis -= kw; zarobekCalk -= kw; if(zarobekDzis<0) zarobekDzis=0; if(zarobekCalk<0) zarobekCalk=0; }
+    else if(currentAdminAction==='wyzeruj') { zarobekDzis=0; zarobekCalk=0; }
+    aktualizujZarobek();
     document.getElementById('adminPanel').style.display='none';
 }
 function anulujAdminAction(){
