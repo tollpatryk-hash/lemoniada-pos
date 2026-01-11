@@ -9,6 +9,7 @@ body{font-family:Arial;text-align:center;margin:20px;}
 button{margin:5px;padding:5px 10px;}
 #paragon{border:1px solid black; display:inline-block; padding:10px; margin-top:10px; text-align:center; min-width:250px;}
 #produktyDiv{margin:10px;}
+
 /* Okienko admina na środku */
 #adminLoginBox{
     display:none;
@@ -36,8 +37,8 @@ button{margin:5px;padding:5px 10px;}
 </head>
 <body>
 
-<h2>Logowanie</h2>
 <div id="loginDiv">
+<h2>Logowanie</h2>
 Login: <input id="loginUser" placeholder="Login">
 Hasło: <input id="passUser" type="password" placeholder="Hasło">
 <button onclick="logowanie()">Zaloguj</button>
@@ -61,13 +62,11 @@ Hasło: <input id="passUser" type="password" placeholder="Hasło">
 </div>
 
 <h3>Wartość zakupu: <span id="wartoscZakupu">0</span> zł</h3>
-
 <div id="paragon"></div>
-
 <h3 id="zarobekTekst">Zarobek z dzisiaj: 0 | Zarobek łącznie: 0</h3>
 </div>
 
-<!-- Okienko admina -->
+<!-- Okienko logowania admina -->
 <div id="adminLoginBox">
 <h3>Logowanie admina</h3>
 Login: <input id="adminLogin" placeholder="Login"><br>
@@ -163,7 +162,10 @@ function pobierzParagon(){
 function logowanie(){
     const l=document.getElementById('loginUser').value;
     const p=document.getElementById('passUser').value;
-    if(l==='stoisko' && p==='lemoniada123'){document.getElementById('loginDiv').style.display='none';document.getElementById('appDiv').style.display='block';}
+    if(l==='stoisko' && p==='lemoniada123'){
+        document.getElementById('loginDiv').style.display='none';
+        document.getElementById('appDiv').style.display='block';
+    }
     else{document.getElementById('loginError').innerText='Błędny login lub hasło!';}
 }
 
@@ -199,6 +201,5 @@ function anulujAdmin(){
     document.getElementById('adminKwota').value='';
 }
 </script>
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </body>
 </html>
