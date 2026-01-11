@@ -4,121 +4,27 @@
 <meta charset="UTF-8">
 <title>Stoisko z lemoniadą</title>
 <style>
-body {
-    font-family: monospace;
-    background: #f0f0f0;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#loginPanel {
-    text-align: center;
-    margin-bottom: 20px;
-}
-#loginPanel h2 {
-    font-size: 28px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-#loginPanel input {
-    margin: 5px;
-}
-
-/* Nagłówek stoisko */
-#header {
-    display: none;
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-/* Lista produktów */
-.product {
-    display: flex;
-    justify-content: space-between;
-    width: 300px;
-    margin: 5px 0;
-    align-items: center;
-}
-.product span.ilosc {
-    width: 30px;
-    text-align: center;
-}
-.product button {
-    width: 30px;
-    margin-left: 5px;
-}
-
-/* Przyciski */
-#buttons {
-    display: none;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 10px 0;
-}
-
-/* Zarobek */
-#zarobek, #zarobekCalkowity {
-    font-weight: bold;
-    margin: 5px 0;
-}
-
-/* Wartość zakupu */
-#wartoscZakupu {
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-/* Paragon */
-#paragon {
-    background: white;
-    padding: 10px 15px;
-    border: 1px dashed black;
-    text-align: center;
-    min-width: 250px;
-}
-.parLine { white-space: pre; display: block; }
-.parTitle { font-weight: bold; font-size: 18px; margin: 6px 0; }
-.parItem { display: flex; justify-content: space-between; margin: 2px 0; }
-.parSum { font-weight: bold; margin: 6px 0; }
-.parThanks { margin-top: 4px; }
-
-/* Panel admina dynamiczny */
-#adminPanel {
-    display: none;
-    position: fixed;
-    background: #fff;
-    border: 2px solid black;
-    padding: 15px;
-    z-index: 100;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, -30%);
-    min-width: 300px;
-}
-#adminPanel input[type=number] {
-    width: 60px;
-    text-align: center;
-}
-#adminPanel button {
-    margin: 5px;
-}
-#loginAdminPanel {
-    display: none;
-    position: fixed;
-    background: #fff;
-    border: 2px solid black;
-    padding: 15px;
-    z-index: 100;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, -30%);
-}
-#loginAdminPanel input {
-    margin: 5px;
-}
+body { font-family: monospace; background: #f0f0f0; padding: 20px; display:flex; flex-direction:column; align-items:center; }
+#loginPanel { text-align:center; margin-bottom:20px; }
+#loginPanel h2 { font-size:28px; font-weight:bold; margin-bottom:10px; }
+#loginPanel input { margin:5px; }
+#header { display:none; font-size:24px; font-weight:bold; margin-bottom:20px; }
+.product { display:flex; justify-content:space-between; width:300px; margin:5px 0; align-items:center; }
+.product span.ilosc { width:30px; text-align:center; }
+.product button { width:30px; margin-left:5px; }
+#buttons { display:none; flex-wrap:wrap; gap:10px; margin:10px 0; }
+#zarobek, #zarobekCalkowity { font-weight:bold; margin:5px 0; display:none; }
+#wartoscZakupu { font-weight:bold; margin-bottom:10px; display:none; }
+#paragon { background:white; padding:10px 15px; border:1px dashed black; text-align:center; min-width:250px; display:none; }
+.parLine { white-space:pre; display:block; }
+.parTitle { font-weight:bold; font-size:18px; margin:6px 0; }
+.parItem { display:flex; justify-content:space-between; margin:2px 0; }
+.parSum { font-weight:bold; margin:6px 0; }
+.parThanks { margin-top:4px; }
+#adminPanel, #loginAdminPanel { display:none; position:fixed; background:#fff; border:2px solid black; padding:15px; z-index:100; top:30%; left:50%; transform:translate(-50%,-30%); min-width:300px; }
+#adminPanel input[type=number] { width:60px; text-align:center; }
+#adminPanel button, #loginAdminPanel button { margin:5px; }
+#loginAdminPanel input { margin:5px; }
 </style>
 </head>
 <body>
@@ -162,13 +68,13 @@ body {
 </div>
 
 <!-- Zarobek -->
-<div id="zarobek" style="display:none;">Zarobek z dzisiaj: 0.00 zł</div>
-<div id="zarobekCalkowity" style="display:none;">Zarobek łącznie: 0.00 zł</div>
+<div id="zarobek">Zarobek z dzisiaj: 0.00 zł</div>
+<div id="zarobekCalkowity">Zarobek łącznie: 0.00 zł</div>
 
-<div id="wartoscZakupu" style="display:none;">Wartość zakupu: 0 zł</div>
+<div id="wartoscZakupu">Wartość zakupu: 0 zł</div>
 
 <!-- Paragon -->
-<div id="paragon" style="display:none;">
+<div id="paragon">
     <div class="parLine">==============================</div>
     <div class="parTitle">LEMONIADA</div>
     <div class="parLine">==============================</div>
@@ -281,6 +187,12 @@ function generujParagon(){
     zarobekDzis += sumaZakupu;
     zarobekCalk += sumaZakupu;
     aktualizujZarobek();
+    // Zerujemy liczniki produktów
+    for(let p in produkty) {
+        produkty[p].ilosc=0;
+        document.getElementById(p).innerText='0';
+    }
+    aktualizujWartoscZakupu();
     alert('Paragon wygenerowany i zarobek zapisany!');
 }
 
@@ -317,14 +229,20 @@ function zalogujAdmin(){
 
 // --- Panel admina akcji ---
 function pokazAdminPanel(){
+    if(currentAdminAction==='wyzeruj'){
+        // Wyzerowanie zarobku bez pytania o kwotę
+        zarobekDzis = 0;
+        zarobekCalk = 0;
+        aktualizujZarobek();
+        return;
+    }
     const panel=document.getElementById('adminPanel');
-    panel.style.display='block';
     const title=document.getElementById('adminActionTitle');
     const kwotaInput=document.getElementById('adminKwota');
+    panel.style.display='block';
     kwotaInput.value=0;
     if(currentAdminAction==='dodaj') title.innerText='Dodaj zarobek';
     else if(currentAdminAction==='odejmij') title.innerText='Odejmij zarobek';
-    else if(currentAdminAction==='wyzeruj') title.innerText='Wyzeruj zarobek';
 }
 function zmienKwote(delta){
     const kw=document.getElementById('adminKwota');
@@ -334,13 +252,10 @@ function zatwierdzAdminAction(){
     const kw=parseFloat(document.getElementById('adminKwota').value);
     if(currentAdminAction==='dodaj') { zarobekDzis += kw; zarobekCalk += kw; }
     else if(currentAdminAction==='odejmij') { zarobekDzis -= kw; zarobekCalk -= kw; if(zarobekDzis<0) zarobekDzis=0; if(zarobekCalk<0) zarobekCalk=0; }
-    else if(currentAdminAction==='wyzeruj') { zarobekDzis=0; zarobekCalk=0; }
     aktualizujZarobek();
     document.getElementById('adminPanel').style.display='none';
 }
-function anulujAdminAction(){
-    document.getElementById('adminPanel').style.display='none';
-}
+function anulujAdminAction(){ document.getElementById('adminPanel').style.display='none'; }
 
 // --- Kopiuj / pobierz paragon ---
 function kopiujParagon(){
