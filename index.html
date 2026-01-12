@@ -300,5 +300,40 @@ function pobierzParagon(){
     });
 }
 </script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+  // KONFIGURACJA - podmień API_KEY później
+  const firebaseConfig = {
+    apiKey: "TU_WKLEJ_API_KEY",
+    authDomain: "lemoniada-stoisko.firebaseapp.com",
+    projectId: "lemoniada-stoisko"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const ref = doc(db, "app", "zarobki");
+
+  // realtime update - automatycznie odświeża sumę na wszystkich urządzeniach
+  onSnapshot(ref, (snap) => {
+    if (snap.exists()) {
+      document.getElementById("suma").innerText = snap.data().total + " zł";
+    }
+  });
+
+  // funkcja dodająca kwotę do globalnych zarobków
+  window.generujParagon = async () => {
+    const kwota = Number(document.getElementById("kwota").value);
+    if (!kwota) return;
+
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      await updateDoc(ref, { total: snap.data().total + kwota });
+    } else {
+      await setDoc(ref, { total: kwota });
+    }
+  };
+</script>
 </body>
     </html>
